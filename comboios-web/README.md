@@ -1,4 +1,4 @@
-# CP-PT Viewer
+# Comboios Web
 
 Interactive web application for browsing Portuguese train (CP - Comboios de Portugal) information and schedules.
 

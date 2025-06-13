@@ -1,4 +1,4 @@
-# CP-PT MCP Server
+# Comboios MCP Server
 
 Model Context Protocol (MCP) server for accessing Portuguese train (CP - Comboios de Portugal) information through AI assistants.
 

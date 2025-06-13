@@ -1,4 +1,4 @@
-# CP-PT API
+# Comboios Server
 
 REST API server for accessing Portuguese train (CP - Comboios de Portugal) information and schedules.
 
