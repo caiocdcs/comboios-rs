@@ -106,19 +106,21 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 }
 ```
 
-### Continue IDE Extension
+### Zed IDE Integration
 
 Add to your Continue configuration:
 
 ```json
 {
-  "mcpServers": [
-    {
-      "name": "cp-pt-trains",
-      "command": "cargo",
-      "args": ["run", "-p", "cp-pt-mcp"],
-      "cwd": "/path/to/cp-pt-rust"
-    }
+  "context_servers": [
+    "comboios-mcp": {
+      "command": {
+        "path": "/path/to/comboios-mcp",
+        "args": [],
+        "env": null
+      },
+      "settings": {}
+    },
   ]
 }
 ```
