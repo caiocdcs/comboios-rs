@@ -1,4 +1,4 @@
-# Comboios Core
+# Comboios
 
 Core library for accessing Portuguese train (CP - Comboios de Portugal) data and schedules.
 

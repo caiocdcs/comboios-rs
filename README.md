@@ -70,23 +70,23 @@ use comboios::ComboiosApi;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create API client with default settings
     let api = ComboiosApi::new();
-    
+
     // Search for stations
     let stations = api.get_stations("Lisboa").await?;
     println!("Found {} stations", stations.response.len());
-    
+
     // Get timetable for a station
     if let Some(station) = stations.response.first() {
         let timetable = api.get_station_timetable(&station.code).await?;
         println!("Found {} trains", timetable.len());
-        
+
         // Get details for a specific train
         if let Some(train_info) = timetable.first() {
             let train_details = api.get_train_details(train_info.train_number as u16).await?;
             println!("Train {} has {} stops", train_details.train_number, train_details.stops.len());
         }
     }
-    
+
     Ok(())
 }
 ```
@@ -105,13 +105,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .timeout(Duration::from_secs(30))
         .user_agent("MyApp/1.0")
         .build()?;
-    
+
     // Create API with custom client and timeout
     let api = ComboiosApi::with_client(client)
         .with_timeout(Duration::from_secs(15));
-    
+
     let stations = api.get_stations("Porto").await?;
-    
+
     Ok(())
 }
 ```
@@ -158,7 +158,6 @@ graph TD
     C[comboios-mcp<br/>MCP Server] --> D
     D --> E[External APIs<br/>CP & IP]
 ```
-
 
 
 ## Author

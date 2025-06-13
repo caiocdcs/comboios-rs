@@ -61,11 +61,8 @@ impl ComboiosApi {
     }
 
     /// Get stations by name
-    pub async fn get_stations(&self, station_name: &str) -> Result<StationResponse, CoreError> {
-        let url = format!(
-            "{}/negocios-e-servicos/estacao-nome/{}",
-            IP_BASE_URL, station_name
-        );
+    pub async fn get_stations(&self, query: &str) -> Result<StationResponse, CoreError> {
+        let url = format!("{}/negocios-e-servicos/estacao-nome/{}", IP_BASE_URL, query);
 
         self.get_request(url, None).await
     }

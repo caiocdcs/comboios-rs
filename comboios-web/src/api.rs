@@ -5,7 +5,7 @@ use crate::domain::{
 const BASE_URL: &str = "http://localhost:3000";
 
 pub async fn search_station(name: &str) -> Result<Vec<Station>, reqwest::Error> {
-    let url = format!("{}/stations/{}", BASE_URL, name);
+    let url = format!("{}/stations?query={}", BASE_URL, name);
     let resp: StationResponse = reqwest::get(&url).await?.json().await?;
     Ok(resp.data)
 }

@@ -28,7 +28,7 @@ pub async fn run(listener: TcpListener) -> Result<()> {
 
     let app = Router::new()
         .route("/ping", get(health_check))
-        .route("/stations/{station_name}", get(stations))
+        .route("/stations", get(stations))
         .route("/stations/timetable/{station_id}", get(station_timetables))
         .route("/trains/{train_id}", get(trains))
         .layer(CorsLayer::new().allow_origin(Any))
