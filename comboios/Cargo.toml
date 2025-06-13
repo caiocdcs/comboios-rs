@@ -3,6 +3,23 @@ name = "comboios"
 version = "0.1.0"
 authors = ["Caio Silva <caio.cdcs@gmail.com>"]
 edition = "2024"
+description = "Unofficial Rust client for Comboios de Portugal (CP) APIs to search stations, get timetables, and retrieve train information"
+documentation = "https://docs.rs/cp-api"
+homepage = "https://github.com/caiocdcs/comboios-rs"
+repository = "https://github.com/caiocdcs/comboios-rs"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+keywords = [
+    "cp",
+    "comboios",
+    "portugal",
+    "trains",
+    "railway",
+    "transport",
+    "api",
+]
+categories = ["api-bindings", "web-programming::http-client"]
+exclude = ["tests/", "examples/", ".github/", "*.md", "Cargo.lock"]
 
 [lib]
 path = "src/lib.rs"
