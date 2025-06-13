@@ -1,0 +1,30 @@
+[package]
+name = "comboios-mcp"
+version = "0.1.0"
+authors = ["Caio Silva <caio.cdcs@gmail.com>"]
+edition = "2024"
+
+[dependencies]
+comboios = { path = "../comboios" }
+anyhow = "1.0.98"
+rmcp = { version = "0.1", features = ["server", "transport-io"] }
+tokio = { version = "1.45.0", features = [
+    "macros",
+    "rt",
+    "rt-multi-thread",
+    "io-std",
+    "signal",
+] }
+tracing = "0.1.41"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing-subscriber = { version = "0.3.19", features = [
+    "env-filter",
+    "std",
+    "fmt",
+] }
+axum = { version = "0.8", features = ["macros"] }
+reqwest = { version = "0.12", features = ["json"] }
+chrono = "0.4"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+tokio-util = { version = "0.7", features = ["codec"] }

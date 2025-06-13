@@ -1,0 +1,32 @@
+[workspace]
+resolver = "3"
+members = [
+    "comboios",        # Main library
+    "comboios-server", # HTTP API server
+    "comboios-mcp",    # MCP server
+    "comboios-web",    # Web interface
+]
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
+
+[workspace.dependencies]
+# Shared dependencies
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+anyhow = "1.0"
+reqwest = { version = "0.12", features = ["json"] }
+
+[workspace.package]
+authors = ["Caio Silva <caio.cdcs@gmail.com>"]
+edition = "2024"
+license = "MIT"
