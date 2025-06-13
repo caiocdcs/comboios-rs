@@ -1,9 +1,9 @@
-use reqwest::Client;
+use comboios::ComboiosApi;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
 pub struct AppState {
-    pub(crate) client: Client,
+    pub(crate) api: ComboiosApi,
 }
 
 #[derive(Debug, Serialize)]

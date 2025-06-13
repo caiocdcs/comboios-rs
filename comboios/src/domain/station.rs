@@ -18,9 +18,9 @@ where
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Station {
     #[serde(alias = "NodeID", deserialize_with = "int_to_string")]
-    code: String,
+    pub code: String,
     #[serde(alias = "Nome")]
-    designation: String,
+    pub designation: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

@@ -4,19 +4,19 @@ use super::station::Station;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Timetable {
-    delay: Option<i8>,
+    pub delay: Option<i8>,
     #[serde(alias = "trainOrigin")]
-    train_origin: Station,
+    pub train_origin: Station,
     #[serde(alias = "trainDestination")]
-    train_destination: Station,
+    pub train_destination: Station,
     #[serde(alias = "departureTime")]
-    departure_time: Option<String>,
+    pub departure_time: Option<String>,
     #[serde(alias = "arrivalTime")]
-    arrival_time: Option<String>,
+    pub arrival_time: Option<String>,
     #[serde(alias = "trainNumber")]
-    train_number: u32,
-    platform: Option<String>,
-    occupancy: Option<u8>,
-    eta: Option<String>,
-    etd: Option<String>,
+    pub train_number: u32,
+    pub platform: Option<String>,
+    pub occupancy: Option<u8>,
+    pub eta: Option<String>,
+    pub etd: Option<String>,
 }

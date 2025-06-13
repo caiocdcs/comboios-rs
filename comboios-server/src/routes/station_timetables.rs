@@ -18,8 +18,7 @@ pub async fn station_timetables(
 ) -> Result<Json<AppResponse<Vec<Timetable>>>, AppError> {
     tracing::info!("Finding timetable for station");
 
-    let timetables =
-        comboios::client::get_station_timetable(state.client.clone(), &station_id).await?;
+    let timetables = state.api.get_station_timetable(&station_id).await?;
 
     Ok(Json(AppResponse { data: timetables }))
 }

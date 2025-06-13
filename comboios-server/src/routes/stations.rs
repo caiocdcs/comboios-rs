@@ -18,7 +18,7 @@ pub async fn stations(
 ) -> Result<Json<AppResponse<Vec<Station>>>, AppError> {
     tracing::info!("Finding stations");
 
-    let response = comboios::client::get_stations(state.client.clone(), &station_name).await?;
+    let response = state.api.get_stations(&station_name).await?;
 
     Ok(Json(AppResponse {
         data: response.response,

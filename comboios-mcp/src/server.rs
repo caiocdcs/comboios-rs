@@ -1,17 +1,19 @@
-use comboios::domain::{station::StationResponse, station_timetable::Timetable, train::Train};
-use reqwest::Client;
+use comboios::{
+    ComboiosApi,
+    domain::{station::StationResponse, station_timetable::Timetable, train::Train},
+};
 use rmcp::{Error as McpError, ServerHandler, model::*, tool};
 
 #[derive(Clone)]
 pub struct CpServer {
-    client: Client,
+    api: ComboiosApi,
 }
 
 #[tool(tool_box)]
 impl CpServer {
     pub fn new() -> Self {
         Self {
-            client: Client::new(),
+            api: ComboiosApi::new(),
         }
     }
 
@@ -28,9 +30,7 @@ impl CpServer {
     }
 
     async fn _get_stations_from(&self, station_name: &str) -> StationResponse {
-        comboios::client::get_stations(self.client.clone(), station_name)
-            .await
-            .unwrap()
+        self.api.get_stations(station_name).await.unwrap()
     }
 
     #[tool(description = "Get station timetable by station id")]
@@ -46,9 +46,7 @@ impl CpServer {
     }
 
     async fn _get_station_timetable(&self, station_id: &str) -> Vec<Timetable> {
-        comboios::client::get_station_timetable(self.client.clone(), station_id)
-            .await
-            .unwrap()
+        self.api.get_station_timetable(station_id).await.unwrap()
     }
 
     #[tool(description = "Get train details by train id")]
@@ -64,9 +62,7 @@ impl CpServer {
     }
 
     async fn _get_train_details(&self, train_id: u16) -> Train {
-        comboios::client::get_train_details(self.client.clone(), train_id)
-            .await
-            .unwrap()
+        self.api.get_train_details(train_id).await.unwrap()
     }
 }
 

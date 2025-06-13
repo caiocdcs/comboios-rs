@@ -18,7 +18,7 @@ pub async fn trains(
 ) -> Result<Json<AppResponse<Train>>, AppError> {
     tracing::info!("Finding train details");
 
-    let train = comboios::client::get_train_details(state.client.clone(), train_id.into()).await?;
+    let train = state.api.get_train_details(train_id.into()).await?;
 
     Ok(Json(AppResponse { data: train }))
 }

@@ -2,7 +2,8 @@ use std::{sync::Arc, time::Duration};
 
 use anyhow::Result;
 use axum::{BoxError, Router, error_handling::HandleErrorLayer, routing::get};
-use reqwest::{Client, StatusCode};
+use comboios::ComboiosApi;
+use reqwest::StatusCode;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::{
@@ -21,9 +22,9 @@ use crate::{
 };
 
 pub async fn run(listener: TcpListener) -> Result<()> {
-    let client = Client::new();
+    let api = ComboiosApi::new();
 
-    let app_state = Arc::new(AppState { client });
+    let app_state = Arc::new(AppState { api });
 
     let app = Router::new()
         .route("/ping", get(health_check))

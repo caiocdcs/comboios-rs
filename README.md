@@ -1,20 +1,20 @@
-# CP-PT Rust
+# Comboios-RS
 
 A Rust-based API and toolset for accessing Portuguese train (CP - Comboios de Portugal) information and schedules.
 
 ## Overview
 
-This project was created to practice Rust programming skills and explore new concepts like the Model Context Protocol (MCP). It provides multiple ways to interact with Portuguese train data through different interfaces.
+This project provides multiple ways to interact with Portuguese train data through different interfaces, featuring a clean and modern API design.
 
 ## Project Structure
 
 ```
-cp-pt-rust/
-├── cp-pt/     # Core library with domain models and HTTP client
-├── cp-pt-server/      # REST API server with Axum
-├── cp-pt-mcp/      # MCP (Model Context Protocol) server
-├── cp-pt-web/   # Dioxus-based web frontend
-└── target/         # Build artifacts
+comboios-rs/
+├── comboios/          # Core library with domain models and HTTP client
+├── comboios-server/   # REST API server with Axum
+├── comboios-mcp/      # MCP (Model Context Protocol) server
+├── comboios-web/      # Dioxus-based web frontend
+└── target/            # Build artifacts
 ```
 
 ## Components
@@ -44,10 +44,10 @@ cp-pt-rust/
 
 ```bash
 # Run the REST API server on http://127.0.0.1:3000
-cargo run -p cp-pt-server
+cargo run -p comboios-server
 
 # Run the MCP server for AI assistant integration
-cargo run -p cp-pt-mcp
+cargo run -p comboios-mcp
 
 # Run the web frontend
 npm run build:css
@@ -58,8 +58,74 @@ dx serve
 
 ```toml
 [dependencies]
-cp-pt = { path = "path/to/cp-pt-rust/cp-pt" }
+comboios = { path = "path/to/comboios-rs/comboios" }
 ```
+
+#### Basic Usage
+
+```rust
+use comboios::ComboiosApi;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create API client with default settings
+    let api = ComboiosApi::new();
+    
+    // Search for stations
+    let stations = api.get_stations("Lisboa").await?;
+    println!("Found {} stations", stations.response.len());
+    
+    // Get timetable for a station
+    if let Some(station) = stations.response.first() {
+        let timetable = api.get_station_timetable(&station.code).await?;
+        println!("Found {} trains", timetable.len());
+        
+        // Get details for a specific train
+        if let Some(train_info) = timetable.first() {
+            let train_details = api.get_train_details(train_info.train_number as u16).await?;
+            println!("Train {} has {} stops", train_details.train_number, train_details.stops.len());
+        }
+    }
+    
+    Ok(())
+}
+```
+
+#### Advanced Configuration
+
+```rust
+use comboios::ComboiosApi;
+use reqwest::Client;
+use std::time::Duration;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create custom HTTP client
+    let client = Client::builder()
+        .timeout(Duration::from_secs(30))
+        .user_agent("MyApp/1.0")
+        .build()?;
+    
+    // Create API with custom client and timeout
+    let api = ComboiosApi::with_client(client)
+        .with_timeout(Duration::from_secs(15));
+    
+    let stations = api.get_stations("Porto").await?;
+    
+    Ok(())
+}
+```
+
+## API Design
+
+The library uses a struct-based API design with the `ComboiosApi` client:
+
+- **Simple Creation**: `ComboiosApi::new()` - Uses default settings
+- **Custom Client**: `ComboiosApi::with_client(client)` - Bring your own reqwest client
+- **Configurable**: `ComboiosApi::with_timeout(duration)` - Set request timeouts
+- **Builder Pattern**: Chain methods for easy configuration
+- **Connection Reuse**: Efficient HTTP connection pooling
+- **Testable**: Easy dependency injection for testing
 
 ## Data Sources
 
@@ -87,11 +153,13 @@ cargo build --release
 
 ```mermaid
 graph TD
-    A[cp-pt-web<br/>Dioxus Web] --> D[cp-pt<br/>Domain Models]
-    B[cp-pt-server<br/>Axum REST] --> D
-    C[cp-pt-mcp<br/>MCP Server] --> D
+    A[comboios-web<br/>Dioxus Web] --> D[comboios<br/>Domain Models]
+    B[comboios-server<br/>Axum REST] --> D
+    C[comboios-mcp<br/>MCP Server] --> D
     D --> E[External APIs<br/>CP & IP]
 ```
+
+
 
 ## Author
 
