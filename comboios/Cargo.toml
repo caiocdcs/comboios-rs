@@ -9,15 +9,7 @@ homepage = "https://github.com/caiocdcs/comboios-rs"
 repository = "https://github.com/caiocdcs/comboios-rs"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-keywords = [
-    "cp",
-    "comboios",
-    "portugal",
-    "trains",
-    "railway",
-    "transport",
-    "api",
-]
+keywords = ["cp", "comboios", "portugal", "trains", "railway"]
 categories = ["api-bindings", "web-programming::http-client"]
 exclude = ["tests/", "examples/", ".github/", "*.md", "Cargo.lock"]
 
