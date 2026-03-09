@@ -20,14 +20,14 @@ inherits = "dev"
 inherits = "dev"
 
 [workspace.dependencies]
-# Shared dependencies
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.0", features = ["full"] }
 anyhow = "1.0"
 reqwest = { version = "0.12", features = ["json"] }
+comboios = { path = "comboios" }
 
 [workspace.package]
 authors = ["Caio Silva <caio.cdcs@gmail.com>"]
 edition = "2024"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 version = "0.1.0"

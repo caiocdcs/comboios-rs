@@ -17,11 +17,11 @@ impl CpServer {
         }
     }
 
-    #[tool(description = "Get stations by name")]
+    #[tool(description = "Get comboios stations by name")]
     async fn get_stations_by_name(
         &self,
         #[tool(param)]
-        #[schemars(description = "Get stations by name")]
+        #[schemars(description = "Get comboios stations by name")]
         station_name: String,
     ) -> Result<CallToolResult, McpError> {
         let response = self._get_stations_from(&station_name).await;
