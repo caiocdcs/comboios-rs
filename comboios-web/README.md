@@ -1,10 +1,73 @@
-# Comboios Web
+# DEPRECATED: comboios-web
+
+**⚠️ This crate is deprecated and will be removed in a future version. ⚠️**
+
+## Migration Notice
+
+The Dioxus-based web frontend has been replaced with a SvelteKit-based frontend in `../comboios-ui/`.
+
+### Why?
+
+- **WASM target complexity**: Building Dioxus for web requires complex WASM toolchain
+- **Build issues**: `dx serve` and `trunk` often fail with cryptic errors
+- **Deployment**: Static hosting is simpler than WASM hosting
+- **Developer experience**: TypeScript + Svelte is easier for frontend development
+
+### New Frontend
+
+See `../comboios-ui/` for the new SvelteKit frontend:
+
+```bash
+cd ../comboios-ui
+npm install
+npm run dev    # http://localhost:5173
+npm run build  # Outputs to build/
+```
+
+### Old Frontend (if needed)
+
+If you still need to run the Dioxus version:
+
+```bash
+# Requires trunk or wasm-pack
+cargo install trunk
+cd comboios-web
+npm run build:css
+trunk serve
+```
+
+**Note**: This may not work reliably due to WASM compilation issues.
+
+## Architecture Change
+
+```
+# Old (Dioxus + WASM)
+comboios-web (Rust) -> WASM -> Browser
+
+# New (SvelteKit)
+comboios-ui (TypeScript) -> Static HTML/JS -> Browser
+                            |
+                            v
+                    comboios-server (Rust) -> HTTP API
+```
+
+## Timeline
+
+- **Current**: comboios-web is deprecated but still compiles
+- **v0.3.0**: comboios-web will be removed
+- **Future**: Only comboios-ui will be maintained
+
+---
+
+# Original Documentation (Deprecated)
 
 Interactive web application for browsing Portuguese train (CP - Comboios de Portugal) information and schedules.
 
 ## Overview
 
 This is a web application built with Dioxus that provides an interface for searching train stations, viewing timetables, and exploring train details. It was created as part of learning Rust and exploring modern web development with WebAssembly.
+
+**Note**: This is now deprecated. Use `comboios-ui` instead.
 
 ## Features
 

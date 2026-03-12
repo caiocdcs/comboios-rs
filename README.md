@@ -13,25 +13,35 @@ comboios-rs/
 ├── comboios/          # Core library with domain models and HTTP client
 ├── comboios-server/   # REST API server with Axum
 ├── comboios-mcp/      # MCP (Model Context Protocol) server
-├── comboios-web/      # Dioxus-based web frontend
-└── target/            # Build artifacts
+├── comboios-web/      # DEPRECATED: Dioxus-based web frontend
+└── comboios-ui/       # NEW: SvelteKit-based web frontend (TypeScript)
 ```
 
 ## Components
 
 - **Core Library** - Shared functionality and domain models for train data
-- **REST API** - HTTP endpoints for train information
+- **REST API** - HTTP endpoints for train information (runs on localhost:3000)
 - **MCP Server** - Model Context Protocol server for AI assistants
-- **Web Viewer** - Interactive frontend application
+- **Web UI** - SvelteKit-based interactive frontend (NEW)
+
+## Architecture
+
+```mermaid
+graph TD
+    A[comboios-ui<br/>SvelteKit Frontend] -->|HTTP| B[comboios-server<br/>Axum REST API]
+    C[comboios-mcp<br/>MCP Server] --> B
+    B --> D[comboios<br/>Domain Models]
+    D --> E[External APIs<br/>IP & CP]
+```
 
 ## Features
 
 - Station search by name
 - Real-time timetables with departure/arrival information
-- Detailed train information including routes and stops
+- Train delay information
 - REST API for integration
 - MCP server for AI assistant integration
-- Web interface for browsing train data
+- Modern web UI (SvelteKit)
 
 ## Quick Start
 
@@ -39,29 +49,50 @@ comboios-rs/
 
 - Rust 1.75+ (uses edition 2024)
 - Cargo
+- Node.js 18+ (for frontend)
 
-### Running Components
+### Running the REST API Server
 
 ```bash
-# Run the REST API server on http://127.0.0.1:3000
+# Start the backend server on http://localhost:3000
 cargo run -p comboios-server
-
-# Run the MCP server for AI assistant integration
-cargo run -p comboios-mcp
-
-# Run the web frontend
-npm run build:css
-dx serve
 ```
 
-### Using as a Library
+The server provides these endpoints:
+- `GET /stations?query={name}` - Search stations
+- `GET /stations/timetable/{id}` - Get station board
+- `GET /trains/{id}` - Deprecated
+
+### Running the MCP Server
+
+```bash
+# Run the MCP server for AI assistant integration
+cargo run -p comboios-mcp
+```
+
+### Running the Web UI (SvelteKit)
+
+```bash
+cd comboios-ui
+npm install
+npm run dev        # Development server on http://localhost:5173
+npm run build      # Production build to dist/
+```
+
+To deploy:
+```bash
+npm run build
+rsync -avz dist/ your-server:/var/www/comboios/
+```
+
+## Using as a Library
 
 ```toml
 [dependencies]
 comboios = { path = "path/to/comboios-rs/comboios" }
 ```
 
-#### Basic Usage
+### Basic Usage
 
 ```rust
 use comboios::ComboiosApi;
@@ -77,13 +108,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Get timetable for a station
     if let Some(station) = stations.response.first() {
-        let timetable = api.get_station_timetable(&station.code).await?;
-        println!("Found {} trains", timetable.len());
-
-        // Get details for a specific train
-        if let Some(train_info) = timetable.first() {
-            let train_details = api.get_train_details(train_info.train_number as u16).await?;
-            println!("Train {} has {} stops", train_details.train_number, train_details.stops.len());
+        let boards = api.get_station_board_now(&station.code).await?;
+        println!("Found {} boards", boards.len());
+        
+        for board in boards {
+            println!("Station: {}", board.station_name);
+            for train in board.trains {
+                println!("  Train {} to {}", 
+                    train.train_number, 
+                    train.destination_station_name
+                );
+            }
         }
     }
 
@@ -91,7 +126,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-#### Advanced Configuration
+### Advanced Configuration
 
 ```rust
 use comboios::ComboiosApi;
@@ -106,9 +141,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .user_agent("MyApp/1.0")
         .build()?;
 
-    // Create API with custom client and timeout
-    let api = ComboiosApi::with_client(client)
-        .with_timeout(Duration::from_secs(15));
+    // Create API with custom client
+    let api = ComboiosApi::with_client(client);
 
     let stations = api.get_stations("Porto").await?;
 
@@ -122,19 +156,31 @@ The library uses a struct-based API design with the `ComboiosApi` client:
 
 - **Simple Creation**: `ComboiosApi::new()` - Uses default settings
 - **Custom Client**: `ComboiosApi::with_client(client)` - Bring your own reqwest client
-- **Configurable**: `ComboiosApi::with_timeout(duration)` - Set request timeouts
 - **Builder Pattern**: Chain methods for easy configuration
 - **Connection Reuse**: Efficient HTTP connection pooling
-- **Testable**: Easy dependency injection for testing
 
 ## Data Sources
 
 This project integrates with official Portuguese transport APIs:
 
-- CP (Comboios de Portugal) - https://www.cp.pt/sites/spring
-- IP (Infraestruturas de Portugal) - https://www.infraestruturasdeportugal.pt
+- IP (Infraestruturas de Portugal) - Real-time station boards
+- CP (Comboios de Portugal) - Station search
 
 Note: These are unofficial API endpoints discovered through web inspection. They may change or become unavailable without notice.
+
+## API Changes
+
+### v0.2.0 Migration Notes
+
+The project migrated from the old CP API to the new Infraestruturas de Portugal (IP) API:
+
+**Breaking Changes:**
+- `get_station_timetable(station_id)` → `get_station_board_now(station_id)`
+- Returns `Vec<StationBoard>` instead of `Vec<Timetable>`
+- `get_train_details()` is deprecated and no longer available
+- New types: `StationBoard`, `TrainEntry` with delay parsing
+
+See [MIGRATION.md](MIGRATION.md) for detailed migration guide.
 
 ## Development
 
@@ -147,18 +193,10 @@ cargo test
 
 # Build for release
 cargo build --release
+
+# Run clippy
+cargo clippy
 ```
-
-## Architecture
-
-```mermaid
-graph TD
-    A[comboios-web<br/>Dioxus Web] --> D[comboios<br/>Domain Models]
-    B[comboios-server<br/>Axum REST] --> D
-    C[comboios-mcp<br/>MCP Server] --> D
-    D --> E[External APIs<br/>CP & IP]
-```
-
 
 ## Author
 
