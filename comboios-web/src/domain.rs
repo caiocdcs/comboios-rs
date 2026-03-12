@@ -8,23 +8,75 @@ pub struct Station {
     pub name: String,
 }
 
+/// Station board response from the API
+#[derive(Debug, Deserialize, Clone)]
+pub struct StationBoardResponse {
+    pub data: Vec<StationBoard>,
+}
+
+/// Station board containing departures or arrivals
 #[derive(Debug, Clone, Deserialize)]
-pub struct Timetable {
-    pub delay: Option<i8>,
-    #[serde(alias = "trainOrigin")]
-    pub train_origin: Station,
-    #[serde(alias = "trainDestination")]
-    pub train_destination: Station,
-    #[serde(alias = "departureTime")]
-    pub departure_time: Option<String>,
-    #[serde(alias = "arrivalTime")]
-    pub arrival_time: Option<String>,
-    #[serde(alias = "trainNumber")]
+pub struct StationBoard {
+    #[serde(alias = "NodeID")]
+    pub station_id: u32,
+    #[serde(alias = "NomeEstacao")]
+    pub station_name: String,
+    #[serde(alias = "TipoPedido")]
+    pub request_type: u8,
+    #[serde(alias = "NodesComboioTabelsPartidasChegadas")]
+    pub trains: Vec<TrainEntry>,
+}
+
+/// Individual train entry in the station board
+#[derive(Debug, Clone, Deserialize)]
+pub struct TrainEntry {
+    #[serde(alias = "NComboio1")]
     pub train_number: u32,
-    pub platform: Option<String>,
-    pub occupancy: Option<u8>,
-    pub eta: Option<String>,
-    pub etd: Option<String>,
+    #[serde(alias = "NComboio2")]
+    pub train_number_alt: u32,
+    #[serde(alias = "NomeEstacaoOrigem")]
+    pub origin_station_name: String,
+    #[serde(alias = "NomeEstacaoDestino")]
+    pub destination_station_name: String,
+    #[serde(alias = "EstacaoOrigem")]
+    pub origin_station_id: u32,
+    #[serde(alias = "EstacaoDestino")]
+    pub destination_station_id: u32,
+    #[serde(alias = "DataHoraPartidaChegada")]
+    pub time: String,
+    #[serde(alias = "DataRealizacao")]
+    pub date: String,
+    #[serde(alias = "Observacoes")]
+    pub observations: String,
+    #[serde(alias = "TipoServico")]
+    pub service_type: String,
+    #[serde(alias = "ComboioPassou")]
+    pub has_passed: bool,
+    #[serde(alias = "Operador")]
+    pub operator: String,
+}
+
+impl TrainEntry {
+    /// Parse delay in minutes from observations string
+    pub fn delay_minutes(&self) -> Option<u32> {
+        if self.observations.is_empty() {
+            return None;
+        }
+
+        // Match patterns like "Circula com atraso de 49 min."
+        let re = regex_lite::Regex::new(r"atraso\s+de\s+(\d+)\s+min").ok()?;
+        re.captures(&self.observations.to_lowercase())
+            .and_then(|cap| cap.get(1))
+            .and_then(|m| m.as_str().parse().ok())
+    }
+
+    /// Get display time with delay info
+    pub fn display_time(&self) -> String {
+        match self.delay_minutes() {
+            Some(delay) if delay > 0 => format!("{} (+{} min)", self.time, delay),
+            _ => self.time.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -41,30 +93,8 @@ pub struct Stopover {
     pub eta: Option<String>,
     pub etd: Option<String>,
 }
-#[derive(Debug, Deserialize, Clone)]
-pub struct StopoverResponse {
-    pub data: Vec<Timetable>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct TrainDetails {
-    #[serde(alias = "train_number")]
-    pub id: u32,
-    pub delay: Option<i8>,
-    pub occupancy: Option<u8>,
-    pub latitude: Option<String>,
-    pub longitude: Option<String>,
-    pub status: Option<String>,
-    #[serde(alias = "stops")]
-    pub stops: Option<Vec<Stopover>>,
-}
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct StationResponse {
     pub data: Vec<Station>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct TrainDetailsResponse {
-    pub data: TrainDetails,
 }
