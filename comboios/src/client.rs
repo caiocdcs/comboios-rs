@@ -4,7 +4,11 @@ use reqwest::Client;
 use serde::de::DeserializeOwned;
 
 use crate::{
-    domain::{station::StationResponse, station_timetable::Timetable, train::Train},
+    domain::{
+        station::StationResponse,
+        station_timetable::{StationBoard, StationBoardResponse},
+        train::Train,
+    },
     error::CoreError,
 };
 
@@ -256,29 +260,62 @@ impl ComboiosApi {
         self.get_request(url, None).await
     }
 
-    /// Get station timetable by station ID
+    /// Get station timetable (departures and arrivals) by station ID
+    ///
+    /// Uses the Infraestruturas de Portugal API which provides real-time
+    /// station board information including delays and service types.
+    ///
+    /// # Arguments
+    /// * `station_id` - The station NodeID (e.g., "9431039" for Lisboa-Oriente)
+    /// * `start_time` - Start time for the query (format: "YYYY-MM-DD HH:MM")
+    /// * `end_time` - End time for the query (format: "YYYY-MM-DD HH:MM")
+    ///
+    /// # Example
+    /// ```ignore
+    /// use comboios::ComboiosApi;
+    ///
+    /// let api = ComboiosApi::new();
+    /// let boards = api.get_station_timetable("9431039", "2026-03-11 06:00", "2026-03-11 20:00").await?;
+    /// ```
     pub async fn get_station_timetable(
         &self,
         station_id: &str,
-    ) -> Result<Vec<Timetable>, CoreError> {
-        let formatted_station_id = format!("{}-{}", &station_id[..2], &station_id[2..]);
+        start_time: &str,
+        end_time: &str,
+    ) -> Result<Vec<StationBoard>, CoreError> {
+        // Validate station_id to prevent panics
+        if station_id.is_empty() {
+            return Err(CoreError::InvalidInput(
+                "station_id cannot be empty".into(),
+            ));
+        }
+
+        // Services to include: all train types (with spaces as required by API)
+        let services = "INTERNACIONAL, ALFA, IC, IR, REGIONAL, URB|SUBUR, ESPECIAL";
 
         let url = format!(
-            "{}/station/trains?stationId={}",
-            self.config.cp_base_url, formatted_station_id
+            "{}/negocios-e-servicos/partidas-chegadas/{}/{}/{}/{}",
+            self.config.ip_base_url,
+            station_id,
+            urlencoding::encode(start_time),
+            urlencoding::encode(end_time),
+            services
         );
 
-        self.get_request(url, None).await
+        let response: StationBoardResponse = self.get_request(url, None).await?;
+        Ok(response.response)
     }
 
     /// Get train details by train ID
-    pub async fn get_train_details(&self, train_id: u16) -> Result<Train, CoreError> {
-        let url = format!(
-            "{}/station/trains/train?trainId={}",
-            self.config.cp_base_url, train_id
-        );
-
-        self.get_request(url, None).await
+    ///
+    /// # Deprecated
+    /// This method is currently unavailable as the CP API endpoint has been removed.
+    /// It may be restored in a future version if a replacement endpoint is found.
+    #[deprecated(since = "0.2.0", note = "CP API endpoint no longer available")]
+    pub async fn get_train_details(&self, _train_id: u16) -> Result<Train, CoreError> {
+        Err(CoreError::InvalidInput(
+            "Train details API is no longer available. Use get_station_timetable instead.".into(),
+        ))
     }
 
     /// Search for stations using a query builder
@@ -313,25 +350,51 @@ impl ComboiosApi {
     ///
     /// # Example
     /// ```ignore
-    /// use comboios::{ComboiosApi, TimetableFilter};
+    /// use comboios::ComboiosApi;
     ///
     /// let api = ComboiosApi::new();
-    /// let filter = TimetableFilter::new()
-    ///     .platform("3");
+    /// let boards = api.get_station_timetable("9431039", "2026-03-11 06:00", "2026-03-11 20:00").await?;
     ///
-    /// let timetable = api.get_filtered_timetable("94405", filter).await?;
+    /// // Filter by service type
+    /// let ic_trains: Vec<_> = boards.iter()
+    ///     .flat_map(|b| &b.trains)
+    ///     .filter(|t| t.service_type == "IC")
+    ///     .collect();
     /// ```
-    pub async fn get_filtered_timetable(
+    pub async fn get_station_timetable_filtered(
         &self,
         station_id: &str,
-        filter: crate::query_builder::TimetableFilter,
-    ) -> Result<Vec<Timetable>, CoreError> {
-        let timetable = self.get_station_timetable(station_id).await?;
+        start_time: &str,
+        end_time: &str,
+        service_type: Option<&str>,
+    ) -> Result<Vec<StationBoard>, CoreError> {
+        let mut boards = self.get_station_timetable(station_id, start_time, end_time).await?;
 
-        Ok(timetable
-            .into_iter()
-            .filter(|entry| filter.matches(entry))
-            .collect())
+        if let Some(service) = service_type {
+            for board in &mut boards {
+                board.trains.retain(|t| t.service_type == service);
+            }
+            // Remove empty boards
+            boards.retain(|b| !b.trains.is_empty());
+        }
+
+        Ok(boards)
+    }
+
+    /// Get current station board for the next 12 hours
+    ///
+    /// Convenience method that automatically sets time range
+    pub async fn get_station_board_now(
+        &self,
+        station_id: &str,
+    ) -> Result<Vec<StationBoard>, CoreError> {
+        use chrono::{Duration, Local};
+
+        let now = Local::now();
+        let start = now.format("%Y-%m-%d %H:%M").to_string();
+        let end = (now + Duration::hours(12)).format("%Y-%m-%d %H:%M").to_string();
+
+        self.get_station_timetable(station_id, &start, &end).await
     }
 }
 

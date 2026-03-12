@@ -4,7 +4,7 @@ use axum::{
     Json,
     extract::{Path, State},
 };
-use comboios::domain::station_timetable::Timetable;
+use comboios::domain::station_timetable::StationBoard;
 
 use crate::{
     domain::{AppResponse, AppState},
@@ -15,10 +15,10 @@ use crate::{
 pub async fn station_timetables(
     State(state): State<Arc<AppState>>,
     Path(station_id): Path<String>,
-) -> Result<Json<AppResponse<Vec<Timetable>>>, AppError> {
-    tracing::info!("Finding timetable for station");
+) -> Result<Json<AppResponse<Vec<StationBoard>>>, AppError> {
+    tracing::info!("Finding timetable for station {}", station_id);
 
-    let timetables = state.api.get_station_timetable(&station_id).await?;
+    let boards = state.api.get_station_board_now(&station_id).await?;
 
-    Ok(Json(AppResponse { data: timetables }))
+    Ok(Json(AppResponse { data: boards }))
 }

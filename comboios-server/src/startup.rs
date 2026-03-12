@@ -34,7 +34,7 @@ pub async fn run(listener: TcpListener) -> Result<()> {
         .layer(CorsLayer::new().allow_origin(Any))
         .layer(
             ServiceBuilder::new()
-                .set_x_request_id(MakeRequestUuid::default())
+                .set_x_request_id(MakeRequestUuid)
                 .layer(
                     TraceLayer::new_for_http()
                         .make_span_with(DefaultMakeSpan::new().include_headers(true))

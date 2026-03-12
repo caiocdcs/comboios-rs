@@ -1,7 +1,7 @@
 //! Basic usage example for the Comboios API
 //!
-//! This example demonstrates how to use the new ComboiosApi struct
-//! to search for stations, get timetables, and retrieve train details.
+//! This example demonstrates how to use the ComboiosApi struct
+//! to search for stations and get departure/arrival boards.
 //!
 //! Run with: cargo run --example basic_usage
 
@@ -39,7 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
-    // Example 2: Get timetable for first station
+    // Example 2: Get departure board for first station
     let first_station = match stations.response.first() {
         Some(s) => s,
         None => {
@@ -48,55 +48,54 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
-    println!("\n2. Getting timetable for '{}'...", first_station.designation);
-    let timetable = match api.get_station_timetable(&first_station.code).await {
-        Ok(t) => t,
+    let now = chrono::Local::now();
+    let start = now.format("%Y-%m-%d %H:%M").to_string();
+    let end = (now + chrono::Duration::hours(12)).format("%Y-%m-%d %H:%M").to_string();
+
+    println!("\n2. Getting departures for '{}'...", first_station.designation);
+    let boards = match api.get_station_timetable(&first_station.code, &start, &end).await {
+        Ok(b) => b,
         Err(e) => {
             println!("Failed to get timetable: {}", e);
             return Ok(());
         }
     };
 
-    println!("Found {} trains:", timetable.len());
-    for (i, train) in timetable.iter().take(3).enumerate() {
-        println!(
-            "   {}. Train {} from {} to {}",
-            i + 1,
-            train.train_number,
-            train.train_origin.designation,
-            train.train_destination.designation
-        );
-        if let Some(departure) = &train.departure_time {
-            println!("      Departure: {}", departure);
+    let total_trains: usize = boards.iter().map(|b| b.trains.len()).sum();
+    println!("Found {} train entries:", total_trains);
+
+    // Show trains from first board
+    if let Some(board) = boards.first() {
+        println!("\n   Board: {} ({} entries)", board.station_name, board.trains.len());
+        
+        for (i, train) in board.trains.iter().take(5).enumerate() {
+            print!(
+                "   {}. Train {}: {} to {} at {}",
+                i + 1,
+                train.train_number,
+                train.origin_station_name,
+                train.destination_station_name,
+                train.time
+            );
+            if let Some(delay) = train.delay_minutes() {
+                print!(" (delayed {} min)", delay);
+            }
+            println!();
+            println!("      Service: {}", train.service_type);
+            if !train.observations.is_empty() {
+                println!("      Note: {}", train.observations);
+            }
         }
     }
 
-    // Example 3: Get train details
-    let first_train = match timetable.first() {
-        Some(t) => t,
-        None => {
-            println!("No trains found");
-            return Ok(());
+    // Example 3: Using convenience method
+    println!("\n3. Using get_station_board_now() convenience method...");
+    match api.get_station_board_now(&first_station.code).await {
+        Ok(boards) => {
+            let total: usize = boards.iter().map(|b| b.trains.len()).sum();
+            println!("   Found {} upcoming trains", total);
         }
-    };
-
-    println!("\n3. Getting details for train {}...", first_train.train_number);
-    match api.get_train_details(first_train.train_number as u16).await {
-        Ok(train_details) => {
-            println!("Train {} details:", train_details.train_number);
-            if let Some(first_stop) = train_details.stops.first()
-                && let Some(departure) = &first_stop.departure_time
-            {
-                println!("   First departure: {}", departure);
-            }
-            if let Some(last_stop) = train_details.stops.last()
-                && let Some(arrival) = &last_stop.arrival_time
-            {
-                println!("   Final arrival: {}", arrival);
-            }
-            println!("   Total stops: {}", train_details.stops.len());
-        }
-        Err(e) => println!("Failed to get train details: {}", e),
+        Err(e) => println!("   Failed: {}", e),
     }
 
     println!("\n4. Example with custom configuration...");

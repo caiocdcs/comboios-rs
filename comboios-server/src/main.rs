@@ -7,7 +7,7 @@ use comboios_server::{
 async fn main() -> anyhow::Result<()> {
     let subscriber = get_subscriber(
         "comboios-server".into(),
-        format!("{}=debug,tower_http=debug", env!("CARGO_CRATE_NAME")).into(),
+        format!("{}=debug,tower_http=debug", env!("CARGO_CRATE_NAME")),
         std::io::stdout,
     );
     init_subscriber(subscriber);

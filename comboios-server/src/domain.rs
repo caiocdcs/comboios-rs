@@ -14,8 +14,8 @@ pub struct AppResponse<T> {
 #[derive(Debug, Deserialize)]
 pub struct TrainId(u16);
 
-impl Into<u16> for TrainId {
-    fn into(self) -> u16 {
-        self.0
+impl From<TrainId> for u16 {
+    fn from(val: TrainId) -> Self {
+        val.0
     }
 }
