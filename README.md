@@ -13,8 +13,7 @@ comboios-rs/
 ├── comboios/          # Core library with domain models and HTTP client
 ├── comboios-server/   # REST API server with Axum
 ├── comboios-mcp/      # MCP (Model Context Protocol) server
-├── comboios-web/      # DEPRECATED: Dioxus-based web frontend
-└── comboios-ui/       # NEW: SvelteKit-based web frontend (TypeScript)
+└── comboios-ui/       # SvelteKit-based web frontend (TypeScript)
 ```
 
 ## Components
@@ -22,7 +21,7 @@ comboios-rs/
 - **Core Library** - Shared functionality and domain models for train data
 - **REST API** - HTTP endpoints for train information (runs on localhost:3000)
 - **MCP Server** - Model Context Protocol server for AI assistants
-- **Web UI** - SvelteKit-based interactive frontend (NEW)
+- **Web UI** - SvelteKit-based interactive frontend
 
 ## Architecture
 
@@ -74,14 +73,14 @@ cargo run -p comboios-mcp
 
 ```bash
 cd comboios-ui
-npm install
-npm run dev        # Development server on http://localhost:5173
-npm run build      # Production build to dist/
+bun install
+bun run dev        # Development server on http://localhost:5173
+bun run build      # Production build to dist/
 ```
 
 To deploy:
 ```bash
-npm run build
+bun run build
 rsync -avz dist/ your-server:/var/www/comboios/
 ```
 
@@ -201,3 +200,7 @@ cargo clippy
 ## Author
 
 Caio Silva - caio.cdcs@gmail.com
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
