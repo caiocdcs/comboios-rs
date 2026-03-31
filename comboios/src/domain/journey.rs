@@ -26,6 +26,12 @@ pub struct TrainJourney {
     pub delay_minutes: Option<i32>,
     /// Operator name
     pub operator: String,
+    /// Train status observations (e.g., "Circula com atraso de 6 min.")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub observations: Option<String>,
+    /// Journey duration (e.g., "02:30:00")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub duration: Option<String>,
 }
 
 /// Individual stop in a train journey
@@ -49,6 +55,12 @@ pub struct JourneyStop {
     pub delay_minutes: Option<i32>,
     /// Stop number in journey (1-based)
     pub stop_number: usize,
+    /// Whether train has passed this station
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub has_passed: Option<bool>,
+    /// Predicted time (from IP API observations)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub predicted_time: Option<String>,
 }
 
 /// Journey status

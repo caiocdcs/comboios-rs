@@ -24,7 +24,7 @@ pub async fn stations(
 ) -> Result<Json<AppResponse<Vec<Station>>>, AppError> {
     tracing::info!("Finding stations");
 
-    let response = state.api.get_stations(&search.query).await?;
+    let response = state.api.search_stations(&search.query).await?;
 
     Ok(Json(AppResponse {
         data: response.response,

@@ -5,6 +5,7 @@ use axum::{
     extract::{Path, State},
 };
 use comboios::domain::station_timetable::StationBoard;
+use chrono::Local;
 
 use crate::{
     domain::{AppResponse, AppState},
@@ -18,7 +19,11 @@ pub async fn station_timetables(
 ) -> Result<Json<AppResponse<Vec<StationBoard>>>, AppError> {
     tracing::info!("Finding timetable for station {}", station_id);
 
-    let boards = state.api.get_station_board_now(&station_id).await?;
+    let now = Local::now();
+    let date = now.format("%Y-%m-%d").to_string();
+    let start_time = now.format("%H:%M").to_string();
 
-    Ok(Json(AppResponse { data: boards }))
+    let boards = state.api.get_station_timetable(&station_id, &date, Some(&start_time)).await?;
+
+    Ok(Json(AppResponse { data: boards.response }))
 }

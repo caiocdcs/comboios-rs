@@ -10,6 +10,8 @@ use crate::{
     domain::{
         station::StationResponse,
         station_timetable::{StationBoard, StationBoardResponse},
+        train_journey::IpTrainJourneyResponse,
+        journey::TrainJourney,
     },
     error::CoreError,
     providers::DataProvider,
@@ -66,6 +68,16 @@ impl IpProvider {
             urlencoding::encode(start_time),
             urlencoding::encode(end_time),
             urlencoding::encode(services)
+        )
+    }
+    
+    /// Build train journey URL
+    fn train_journey_url(&self, train_number: &str, date: &str) -> String {
+        format!(
+            "{}/negocios-e-servicos/horarios-ncombio/{}/{}",
+            self.base_url,
+            train_number,
+            urlencoding::encode(date)
         )
     }
 }
@@ -141,6 +153,34 @@ impl DataProvider for IpProvider {
         let end = (now + Duration::hours(12)).format("%Y-%m-%d %H:%M").to_string();
         
         self.get_station_timetable(station_id, &start, &end).await
+    }
+    
+    async fn get_train_journey(&self, train_number: &str) -> Result<Option<TrainJourney>, CoreError> {
+        use chrono::Local;
+        
+        let date = Local::now().format("%Y-%m-%d").to_string();
+        let url = self.train_journey_url(train_number, &date);
+        
+        let response = self
+            .client
+            .get(&url)
+            .timeout(Duration::from_secs(30))
+            .header("User-Agent", "Chrome")
+            .send()
+            .await?;
+        
+        if response.status().as_u16() == 404 {
+            return Ok(None);
+        }
+        
+        if !response.status().is_success() {
+            let status = response.status().as_u16();
+            let text = response.text().await.unwrap_or_default();
+            return Err(CoreError::ApiError { status, message: text });
+        }
+        
+        let data: IpTrainJourneyResponse = response.json().await?;
+        Ok(Some(data.to_train_journey(train_number)))
     }
 }
 

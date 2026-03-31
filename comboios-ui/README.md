@@ -26,26 +26,26 @@ This is a modern, lightweight web application built with SvelteKit and TypeScrip
 
 ### Prerequisites
 
-- Node.js 18+
+- Bun 1.0+ (or Node.js 18+)
 - Backend server running on localhost:3000
 
 ### Development
 
 ```bash
-npm install
-npm run dev    # http://localhost:5173
+bun install
+bun run dev    # http://localhost:5173
 ```
 
 ### Production Build
 
 ```bash
-npm run build  # Outputs to build/
+bun run build  # Outputs to build/
 ```
 
 ### Deployment
 
 ```bash
-npm run build
+bun run build
 rsync -avz build/ your-server:/var/www/comboios/
 ```
 
@@ -76,4 +76,4 @@ Connects to comboios-server REST API:
 
 ## Development Notes
 
-This replaces the old Dioxus-based comboios-web frontend with a simpler, static-site approach that's easier to deploy and maintain.
+This SvelteKit frontend provides a modern, static-site approach that's easier to deploy and maintain compared to the previous Dioxus-based implementation.

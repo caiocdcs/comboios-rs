@@ -1,10 +1,12 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::Result;
-use axum::{BoxError, Router, error_handling::HandleErrorLayer, routing::get};
-use comboios::ComboiosApi;
+use axum::{BoxError, Json, Router, error_handling::HandleErrorLayer, routing::get};
+use comboios::Comboios;
 use reqwest::StatusCode;
+use serde::Serialize;
 use tokio::net::TcpListener;
+use tokio::time::interval;
 use tower::ServiceBuilder;
 use tower_http::{
     ServiceBuilderExt,
@@ -16,22 +18,62 @@ use tower_http::{
 use crate::{
     domain::AppState,
     routes::{
-        health_check::health_check, station_timetables::station_timetables, stations::stations,
-        trains::trains,
+        diagnostics::diagnostics,
+        health_check::health_check, 
+        refresh::refresh_credentials,
+        station_timetables::station_timetables, 
+        stations::stations,
+        trains::{trains, get_train_journey},
     },
 };
 
-pub async fn run(listener: TcpListener) -> Result<()> {
-    let api = ComboiosApi::new();
+#[derive(Serialize)]
+struct ErrorBody {
+    error: String,
+    error_type: String,
+    status: u16,
+}
 
-    let app_state = Arc::new(AppState { api });
+pub async fn run(listener: TcpListener) -> Result<()> {
+    let api = Comboios::new().await?;
+
+    tracing::info!("CP credentials loaded from cp.pt on startup");
+
+    let app_state = Arc::new(AppState { api: api.clone() });
+
+    // Background task: refresh CP credentials every 55 minutes
+    let api_for_bg = api.clone();
+    tokio::spawn(async move {
+        let mut refresh_interval = interval(Duration::from_secs(55 * 60));
+        
+        // Wait for first interval, then refresh
+        refresh_interval.tick().await;
+        
+        loop {
+            match api_for_bg.refresh_credentials_from_website().await {
+                Ok(_) => tracing::info!("Background credential refresh succeeded"),
+                Err(e) => tracing::warn!("Background credential refresh failed: {}", e),
+            }
+            refresh_interval.tick().await;
+        }
+    });
 
     let app = Router::new()
         .route("/ping", get(health_check))
+        .route("/refresh", get(refresh_credentials))
+        .route("/diagnostics", get(diagnostics))
         .route("/stations", get(stations))
         .route("/stations/timetable/{station_id}", get(station_timetables))
         .route("/trains/{train_id}", get(trains))
-        .layer(CorsLayer::new().allow_origin(Any))
+        .route("/trains/{train_id}/journey", get(get_train_journey))
+        .layer(
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_methods(Any)
+                .allow_headers(Any)
+                .expose_headers(Any)
+                .max_age(Duration::from_secs(86400)),
+        )
         .layer(
             ServiceBuilder::new()
                 .set_x_request_id(MakeRequestUuid)
@@ -51,17 +93,28 @@ pub async fn run(listener: TcpListener) -> Result<()> {
     Ok(())
 }
 
-async fn handle_errors(err: BoxError) -> (StatusCode, String) {
-    if err.is::<tower::timeout::error::Elapsed>() {
-        tracing::error!("{:?}", err);
+async fn handle_errors(err: BoxError) -> (StatusCode, Json<ErrorBody>) {
+    let (status, error_type, message) = if err.is::<tower::timeout::error::Elapsed>() {
         (
             StatusCode::REQUEST_TIMEOUT,
-            "Request took too long".to_string(),
+            "TimeoutError",
+            "Request timed out after 30 seconds".to_string(),
         )
     } else {
+        tracing::error!("Unhandled error: {:?}", err);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Unhandled internal error: {err}"),
+            "InternalError",
+            "An unexpected error occurred".to_string(),
         )
-    }
+    };
+
+    (
+        status,
+        Json(ErrorBody {
+            error: message,
+            error_type: error_type.to_string(),
+            status: status.as_u16(),
+        }),
+    )
 }

@@ -8,6 +8,7 @@ use std::fmt::Debug;
 
 use crate::{
     domain::{
+        alert::ServiceAlert,
         station::StationResponse,
         station_timetable::StationBoard,
         journey::{TrainJourney, JourneyStop},
@@ -51,16 +52,26 @@ pub trait DataProvider: Send + Sync + Debug {
         let _ = (train_number, count);
         Ok(Vec::new())
     }
+    
+    /// Get service alerts/disruptions
+    /// Returns empty vec if provider doesn't support this feature
+    async fn get_service_alerts(&self) -> Result<Vec<ServiceAlert>, CoreError> {
+        Ok(Vec::new())
+    }
 }
 
+pub mod alerts;
 pub mod api_client;
-pub mod ip_provider;
+pub mod cp_avisos;
 pub mod cp_provider;
-pub mod unified;
 pub mod id_mapping;
+pub mod ip_provider;
+pub mod unified;
 
+pub use alerts::IpAlertsProvider;
 pub use api_client::ComboiosClient;
-pub use ip_provider::IpProvider;
+pub use cp_avisos::CpAvisosProvider;
 pub use cp_provider::{CpConfig, CpProvider};
+pub use id_mapping::{normalize_station_id, to_cp_id, to_ip_id};
+pub use ip_provider::IpProvider;
 pub use unified::UnifiedProvider;
-pub use id_mapping::{to_cp_id, to_ip_id, normalize_station_id};

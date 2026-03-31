@@ -1,1 +1,26 @@
-/target
+# Build artifacts
+/target/
+
+# Development
+.local/
+*.log
+.DS_Store
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+.vscode/
+.vim/
+*.code-workspace
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+Thumbs.db

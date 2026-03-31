@@ -58,9 +58,15 @@ cargo run -p comboios-server
 ```
 
 The server provides these endpoints:
+- `GET /ping` - Health check
 - `GET /stations?query={name}` - Search stations
-- `GET /stations/timetable/{id}` - Get station board
-- `GET /trains/{id}` - Deprecated
+- `GET /stations/timetable/{id}` - Get station timetable
+- `GET /trains/{id}/journey` - Get train journey with stops
+
+Environment variables:
+- `HOST` - Server bind address (default: `0.0.0.0`)
+- `PORT` - Server port (default: `3000`)
+- `RUST_LOG` - Log level (default: `info`)
 
 ### Running the MCP Server
 
@@ -180,6 +186,19 @@ The project migrated from the old CP API to the new Infraestruturas de Portugal 
 - New types: `StationBoard`, `TrainEntry` with delay parsing
 
 See [MIGRATION.md](MIGRATION.md) for detailed migration guide.
+
+## Docker
+
+```bash
+# Build image
+docker build -t comboios .
+
+# Run container
+docker run -p 3000:3000 comboios
+
+# With custom settings
+docker run -p 8080:8080 -e PORT=8080 -e RUST_LOG=debug comboios
+```
 
 ## Development
 

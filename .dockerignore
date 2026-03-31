@@ -1,0 +1,24 @@
+# Build artifacts
+target/
+comboios-ui/node_modules/
+comboios-ui/build/
+comboios-ui/.svelte-kit/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Local dev
+.local/
+.env*
+*.log
+.DS_Store
+
+# Documentation (not needed in container)
+*.md
+LICENSE*

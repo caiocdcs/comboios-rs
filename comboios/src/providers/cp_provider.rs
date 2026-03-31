@@ -110,7 +110,8 @@ impl DataProvider for CpProvider {
         _end_time: &str,
     ) -> Result<Vec<StationBoard>, CoreError> {
         // CP API uses date-based queries, parse from start_time
-        let date = start_time.split_whitespace().next().unwrap_or("2026-03-11");
+        let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+        let date = start_time.split_whitespace().next().unwrap_or(&today);
         let start = start_time.split_whitespace().nth(1).unwrap_or("00:00");
         
         let url = self.timetable_url(station_id, date);

@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use crate::{
     domain::{
+        alert::ServiceAlert,
         journey::{JourneyStop, TrainJourney},
         station::StationResponse,
         station_timetable::StationBoard,
@@ -108,6 +109,29 @@ impl ComboiosClient {
     /// Get next N stops for a train (requires CP provider)
     pub async fn get_next_stops(&self, train_number: &str, count: usize) -> Result<Vec<JourneyStop>, CoreError> {
         self.provider.get_next_stops(train_number, count).await
+    }
+    
+    /// Get service alerts/disruptions
+    pub async fn get_service_alerts(&self) -> Result<Vec<ServiceAlert>, CoreError> {
+        self.provider.get_service_alerts().await
+    }
+    
+    /// Get alerts affecting a specific station
+    pub async fn get_station_alerts(&self, station_id: &str) -> Result<Vec<ServiceAlert>, CoreError> {
+        let all_alerts = self.get_service_alerts().await?;
+        Ok(all_alerts
+            .into_iter()
+            .filter(|alert| alert.affects_station(station_id))
+            .collect())
+    }
+    
+    /// Get alerts affecting a specific line/service type
+    pub async fn get_line_alerts(&self, line: &str) -> Result<Vec<ServiceAlert>, CoreError> {
+        let all_alerts = self.get_service_alerts().await?;
+        Ok(all_alerts
+            .into_iter()
+            .filter(|alert| alert.affects_line(line))
+            .collect())
     }
     
     /// Check if a train is currently at a specific station

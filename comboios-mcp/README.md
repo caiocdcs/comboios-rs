@@ -27,10 +27,10 @@ This is an MCP server that provides AI assistants with tools to access Portugues
 
 ```bash
 # Run the MCP server
-cargo run -p cp-pt-mcp
+cargo run -p comboios-mcp
 
 # For development with detailed logging
-RUST_LOG=debug cargo run -p cp-pt-mcp
+RUST_LOG=debug cargo run -p comboios-mcp
 ```
 
 ### Testing with MCP Inspector
@@ -40,7 +40,7 @@ RUST_LOG=debug cargo run -p cp-pt-mcp
 npm install -g @modelcontextprotocol/inspector
 
 # Run with inspector
-npx @modelcontextprotocol/inspector cargo run -p cp-pt-mcp
+npx @modelcontextprotocol/inspector cargo run -p comboios-mcp
 ```
 
 ## MCP Tools
@@ -100,7 +100,7 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
   "mcpServers": {
     "cp-pt-trains": {
       "command": "cargo",
-      "args": ["run", "-p", "cp-pt-mcp", "--manifest-path", "/path/to/cp-pt-rust/Cargo.toml"]
+      "args": ["run", "-p", "comboios-mcp", "--manifest-path", "/path/to/cp-pt-rust/Cargo.toml"]
     }
   }
 }
@@ -162,16 +162,16 @@ AI: Here are the upcoming departures from Porto - Campanhã:
 
 ```bash
 # Build the MCP server
-cargo build -p cp-pt-mcp
+cargo build -p comboios-mcp
 
 # Run tests
-cargo test -p cp-pt-mcp
+cargo test -p comboios-mcp
 
 # Build for release
-cargo build -p cp-pt-mcp --release
+cargo build -p comboios-mcp --release
 
 # Enable debug logging
-RUST_LOG=debug cargo run -p cp-pt-mcp
+RUST_LOG=debug cargo run -p comboios-mcp
 ```
 
 ## Protocol Details
@@ -221,8 +221,8 @@ Common issues:
 Debug commands:
 ```bash
 # Test server startup
-cargo run -p cp-pt-mcp 2>&1 | head -20
+cargo run -p comboios-mcp 2>&1 | head -20
 
 # Check for compilation errors
-cargo check -p cp-pt-mcp
+cargo check -p comboios-mcp
 ```

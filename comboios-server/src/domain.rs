@@ -1,9 +1,9 @@
-use comboios::ComboiosApi;
+use comboios::Comboios;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
 pub struct AppState {
-    pub(crate) api: ComboiosApi,
+    pub(crate) api: Comboios,
 }
 
 #[derive(Debug, Serialize)]
