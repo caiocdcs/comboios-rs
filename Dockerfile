@@ -6,7 +6,7 @@ WORKDIR /app
 # Plan stage - analyze dependencies
 FROM chef AS planner
 COPY Cargo.toml Cargo.lock ./
-COPY comboios ./comboios
+COPY comboios-core ./comboios-core
 COPY comboios-server ./comboios-server
 COPY comboios-mcp ./comboios-mcp
 RUN cargo chef prepare --recipe-path recipe.json
@@ -14,29 +14,19 @@ RUN cargo chef prepare --recipe-path recipe.json
 # Build stage - compile dependencies first (cached), then app
 FROM chef AS rust-builder
 
-# Install build dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Build dependencies (cached if recipe.json unchanged)
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
-# Build application
 COPY Cargo.toml Cargo.lock ./
-COPY comboios ./comboios
+COPY comboios-core ./comboios-core
 COPY comboios-server ./comboios-server
 COPY comboios-mcp ./comboios-mcp
 RUN cargo build --release -p comboios-server
-
-# Build stage for UI
-FROM node:20-slim AS ui-builder
-WORKDIR /app
-COPY comboios-ui ./comboios-ui
-WORKDIR /app/comboios-ui
-RUN npm install && npm run build
 
 # Runtime stage
 FROM debian:bookworm-slim
@@ -47,7 +37,6 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=rust-builder /app/target/release/comboios-server /app/comboios-server
-COPY --from=ui-builder /app/comboios-ui/build /app/ui
 
 ENV HOST=0.0.0.0
 ENV PORT=3000

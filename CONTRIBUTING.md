@@ -1,41 +1,27 @@
-# Contributing to Comboios-RS
-
-Thank you for your interest in contributing!
+# Contributing
 
 ## Prerequisites
 
-- Rust 1.75+
-- Node.js 18+ (for frontend)
-- Bun
+- Rust (edition 2024)
+- Node.js 20+ / Bun (for the frontend)
 
-## Build & Run
+## Development
 
 ```bash
-# Backend
-cargo run -p comboios-server
-
-# Frontend
-cd comboios-ui
-bun install
-bun run dev
+cargo build
+cargo test
+cargo clippy -- -W clippy::pedantic
 ```
 
-## Code Style
+```bash
+cd comboios-ui
+bun install && bun run dev
+```
 
-- Follow existing patterns in the codebase
-- Run `cargo clippy` before committing
-- Keep changes focused and minimal
+## Guidelines
 
-## Submitting Changes
+- Run clippy and tests before submitting
+- Keep changes focused
+- Open an issue first for significant changes
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Ensure tests pass: `cargo test`
-5. Submit a pull request with clear description
-
-## Questions?
-
-Open an issue for questions or discussion.
-
-This project is dual-licensed under MIT OR Apache-2.0.
+Licensed under MIT OR Apache-2.0.
