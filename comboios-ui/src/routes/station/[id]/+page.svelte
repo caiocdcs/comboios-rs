@@ -6,7 +6,7 @@
   import { ApiException } from '$lib/errors';
   import ServiceTypeBadge from '$lib/components/ServiceTypeBadge.svelte';
   import TrainStatusBadge from '$lib/components/TrainStatusBadge.svelte';
-  import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+  import StationSkeleton from '$lib/components/StationSkeleton.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import type { StationBoard, TrainEntry } from '$lib/types';
 
@@ -18,7 +18,7 @@
   let error: string | null = null;
   let filter = 'all';
 
-  
+
   let currentPage = 1;
   const itemsPerPage = 10;
 
@@ -31,10 +31,10 @@
   async function loadTimetable() {
     const currentStationId = $page.params.id;
     if (!currentStationId) return;
-    
+
     loading = true;
     error = null;
-    
+
     try {
       const response = await getStationTimetable(currentStationId);
       boards = response.data;
@@ -104,8 +104,8 @@
 <div class="max-w-7xl mx-auto">
   <!-- Header -->
   <div class="mb-6">
-    <button 
-      class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors mb-4" 
+    <button
+      class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors mb-4"
       on:click={goBack}
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -113,7 +113,7 @@
       </svg>
       Back to stations
     </button>
-    
+
     <div class="flex flex-col md:flex-row md:items-center md:justify-between">
       <div>
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{stationName}</h1>
@@ -161,12 +161,7 @@
 
   <!-- Loading State -->
   {#if loading}
-    <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-      <div class="card-body py-20 flex flex-col items-center justify-center">
-        <LoadingSpinner size="lg" />
-        <p class="text-gray-600 dark:text-gray-400 mt-4">Loading train information...</p>
-      </div>
-    </div>
+    <StationSkeleton />
   {/if}
 
   <!-- Error State -->
@@ -199,7 +194,7 @@
         </div>
         <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">No matching trains</h3>
         <p class="text-gray-600 dark:text-gray-400 mb-4">No trains match your current filters or search term.</p>
-        <button 
+        <button
           class="btn btn-primary"
           on:click={() => { filter = 'all'; }}
         >
@@ -238,14 +233,14 @@
           {/if}
           <span class="text-gray-500 dark:text-gray-400 text-base font-normal ml-2">({sortedTrains.length})</span>
         </h2>
-        
+
         <!-- Mobile Card View -->
         <div class="lg:hidden space-y-3">
           {#each paginatedTrains as train}
             {@const delayMinutes = train.delay}
             {@const isDelayed = delayMinutes && delayMinutes > 0}
             {@const trainStatus = train.has_passed ? 'departed' : isDelayed ? 'delayed' : 'on-time'}
-            <button 
+            <button
               type="button"
               class="w-full p-4 text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               on:click={() => viewTrainDetails(train)}
@@ -281,7 +276,7 @@
             </button>
           {/each}
         </div>
-        
+
         <!-- Desktop Table View -->
         <div class="hidden lg:block overflow-x-auto">
           <div class="min-w-[800px]">
@@ -298,7 +293,7 @@
               {@const delayMinutes = train.delay}
               {@const isDelayed = delayMinutes && delayMinutes > 0}
               {@const trainStatus = train.has_passed ? 'departed' : isDelayed ? 'delayed' : 'on-time'}
-              <div 
+              <div
                 class="grid grid-cols-5 gap-2 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors items-center"
                 on:click={() => viewTrainDetails(train)}
               >
@@ -325,10 +320,10 @@
             {/each}
           </div>
         </div>
-        
+
         <!-- Pagination -->
         {#if totalPages > 1}
-          <Pagination 
+          <Pagination
             {currentPage}
             {totalPages}
             totalItems={sortedTrains.length}

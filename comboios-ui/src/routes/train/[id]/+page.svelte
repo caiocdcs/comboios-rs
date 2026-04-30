@@ -1,6 +1,6 @@
 <script lang="ts">
   import ServiceTypeBadge from '$lib/components/ServiceTypeBadge.svelte';
-  import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+  import TrainSkeleton from '$lib/components/TrainSkeleton.svelte';
   import JourneyTimeline from '$lib/components/JourneyTimeline.svelte';
   import type { TrainDetails } from '$lib/types';
 
@@ -8,11 +8,11 @@
 
   $: train = data.train;
   $: error = data.error;
-  
+
   function goBack() {
     window.history.back();
   }
-  
+
   function retry() {
     window.location.reload();
   }
@@ -39,7 +39,7 @@
   }
 
   $: currentTime = getCurrentTime();
-  
+
   $: trainCurrentIndex = (() => {
     if (!train?.stops) return 0;
 
@@ -58,7 +58,7 @@
     // If no stops have passed, train is at origin (first stop)
     return 0;
   })();
-  
+
   function getStopStatus(stop: TrainDetails['stops'][0], index: number): 'passed' | 'current' | 'upcoming' {
     if (index < trainCurrentIndex) return 'passed';
     if (index === trainCurrentIndex) return 'current';
@@ -67,8 +67,8 @@
 </script>
 
 <div class="max-w-6xl mx-auto">
-  <button 
-    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors mb-4" 
+  <button
+    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors mb-4"
     on:click={goBack}
   >
     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,7 +76,7 @@
     </svg>
     Back
   </button>
-   
+
   {#if error}
     <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
       <div class="card-body items-center justify-center py-12 text-center">
@@ -93,13 +93,7 @@
       </div>
     </div>
   {:else if !train}
-    <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-      <div class="card-body items-center justify-center py-20">
-        <LoadingSpinner size="lg" />
-        <p class="mt-4 text-gray-500 dark:text-gray-400">Loading train journey details...</p>
-        <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">This may take a few seconds</p>
-      </div>
-    </div>
+    <TrainSkeleton />
   {:else}
     <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mb-6">
       <div class="card-body">
@@ -126,7 +120,7 @@
             </div>
           {/if}
         </div>
-        
+
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
           <div>
             <div class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Origin</div>
@@ -161,8 +155,8 @@
       </div>
     </div>
 
-    <JourneyTimeline 
-      stops={train.stops} 
+    <JourneyTimeline
+      stops={train.stops}
     />
 
     <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mt-6">
@@ -170,7 +164,7 @@
         <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
           All Stops
         </h2>
-        
+
         <!-- Mobile Card View -->
         <div class="lg:hidden space-y-3">
           {#each train.stops as stop, i}
@@ -178,7 +172,7 @@
             {@const stopStatus = getStopStatus(stop, i)}
             {@const isFirst = i === 0}
             {@const isLast = i === train.stops.length - 1}
-            
+
             <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 {stopStatus === 'current' ? 'bg-primary-50 dark:bg-primary-900/20 border-l-4 border-l-primary-500' : 'bg-gray-50 dark:bg-gray-900/50'}">
               <div class="flex items-start justify-between mb-2">
                 <div class="flex items-center gap-2">
@@ -202,7 +196,7 @@
                   {/if}
                 </div>
               </div>
-              
+
               <div class="flex flex-wrap gap-3 text-sm">
                 <div class="flex items-center gap-1">
                   <span class="text-gray-500 dark:text-gray-400">Time:</span>
@@ -228,7 +222,7 @@
             </div>
           {/each}
         </div>
-        
+
         <!-- Desktop Table View -->
         <div class="hidden lg:block overflow-x-auto">
           <table class="table w-full text-sm">
@@ -249,7 +243,7 @@
                 {@const stopStatus = getStopStatus(stop, i)}
                 {@const isFirst = i === 0}
                 {@const isLast = i === train.stops.length - 1}
-                
+
                 <tr class="border-b border-gray-200 dark:border-gray-700 {stopStatus === 'current' ? 'bg-primary-50 dark:bg-primary-900/20' : ''}">
                   <td class="py-3 px-2 text-gray-600 dark:text-gray-400 text-center">
                     {#if stopStatus === 'current'}
