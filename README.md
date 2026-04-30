@@ -1,225 +1,102 @@
-# Comboios-RS
+# comboios-rs
 
-A Rust-based API and toolset for accessing Portuguese train (CP - Comboios de Portugal) information and schedules.
+Unofficial Rust client for Portuguese train data (CP / Infraestruturas de Portugal), with a REST API server, MCP server, and SvelteKit web UI.
 
-## Overview
+## Workspace
 
-This project provides multiple ways to interact with Portuguese train data through different interfaces, featuring a clean and modern API design.
+| Crate | Description |
+|---|---|
+| `comboios-core` | Core library. Wraps the CP API Gateway and the Infraestruturas de Portugal public API. Handles credential fetching, caching, request routing, and mapping raw responses to typed domain models (`TrainJourney`, `StationBoard`, `JourneyStop`, etc.). |
+| `comboios-server` | Axum HTTP server that exposes `comboios-core` as a REST API. Rotates CP credentials automatically in the background. |
+| `comboios-mcp` | MCP (Model Context Protocol) server. Exposes station search, timetables, and train journeys as tools consumable by AI assistants. |
+| `comboios-ui` | SvelteKit frontend. Station search, live departure/arrival boards, and a stop-by-stop train journey view with real-time delay indicators. |
 
-## Project Structure
+## Running
 
-```
-comboios-rs/
-├── comboios/          # Core library with domain models and HTTP client
-├── comboios-server/   # REST API server with Axum
-├── comboios-mcp/      # MCP (Model Context Protocol) server
-└── comboios-ui/       # SvelteKit-based web frontend (TypeScript)
-```
-
-## Components
-
-- **Core Library** - Shared functionality and domain models for train data
-- **REST API** - HTTP endpoints for train information (runs on localhost:3000)
-- **MCP Server** - Model Context Protocol server for AI assistants
-- **Web UI** - SvelteKit-based interactive frontend
-
-## Architecture
-
-```mermaid
-graph TD
-    A[comboios-ui<br/>SvelteKit Frontend] -->|HTTP| B[comboios-server<br/>Axum REST API]
-    C[comboios-mcp<br/>MCP Server] --> B
-    B --> D[comboios<br/>Domain Models]
-    D --> E[External APIs<br/>IP & CP]
-```
-
-## Features
-
-- Station search by name
-- Real-time timetables with departure/arrival information
-- Train delay information
-- REST API for integration
-- MCP server for AI assistant integration
-- Modern web UI (SvelteKit)
-
-## Quick Start
-
-### Prerequisites
-
-- Rust 1.75+ (uses edition 2024)
-- Cargo
-- Node.js 18+ (for frontend)
-
-### Running the REST API Server
-
+**API server**
 ```bash
-# Start the backend server on http://localhost:3000
 cargo run -p comboios-server
 ```
 
-The server provides these endpoints:
-- `GET /ping` - Health check
-- `GET /stations?query={name}` - Search stations
-- `GET /stations/timetable/{id}` - Get station timetable
-- `GET /trains/{id}/journey` - Get train journey with stops
-
-Environment variables:
-- `HOST` - Server bind address (default: `0.0.0.0`)
-- `PORT` - Server port (default: `3000`)
-- `RUST_LOG` - Log level (default: `info`)
-
-### Running the MCP Server
-
+**Web UI**
 ```bash
-# Run the MCP server for AI assistant integration
+cd comboios-ui
+bun install && bun run dev
+```
+
+**MCP server**
+```bash
 cargo run -p comboios-mcp
 ```
 
-### Running the Web UI (SvelteKit)
+## API Endpoints
 
-```bash
-cd comboios-ui
-bun install
-bun run dev        # Development server on http://localhost:5173
-bun run build      # Production build to dist/
-```
+| Method | Path | Description |
+|---|---|---|
+| GET | `/ping` | Health check |
+| GET | `/stations?query=Lisboa` | Search stations by name |
+| GET | `/stations/timetable/{id}` | Live departure/arrival board |
+| GET | `/trains/{id}/journey` | Train journey with stop-by-stop status |
+| GET | `/diagnostics` | CP and IP API reachability |
+| GET | `/refresh` | Force CP credential rotation |
 
-To deploy:
-```bash
-bun run build
-rsync -avz dist/ your-server:/var/www/comboios/
-```
+## Configuration
 
-## Using as a Library
+All settings have defaults and can be overridden via environment variables.
+
+| Variable | Default | Description |
+|---|---|---|
+| `HOST` | `0.0.0.0` | Bind address |
+| `PORT` | `3000` | Port |
+| `RUST_LOG` | `comboios_server=debug,tower_http=debug` | Log filter |
+| `REQUEST_TIMEOUT_SECS` | `30` | Per-request timeout |
+| `CREDENTIAL_REFRESH_SECS` | `3300` | CP credential rotation interval |
+| `CP_API_URL` | `https://api-gateway.cp.pt/cp/services/travel-api` | CP base URL |
+| `IP_API_URL` | `https://www.infraestruturasdeportugal.pt` | IP base URL |
+
+## Library Usage
 
 ```toml
 [dependencies]
-comboios = { path = "path/to/comboios-rs/comboios" }
+comboios-core = { path = "comboios-core" }
 ```
 
-### Basic Usage
-
 ```rust
-use comboios::ComboiosApi;
+use comboios_core::Comboios;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create API client with default settings
-    let api = ComboiosApi::new();
+async fn main() -> Result<(), comboios_core::Error> {
+    let client = Comboios::new().await?;
 
-    // Search for stations
-    let stations = api.get_stations("Lisboa").await?;
-    println!("Found {} stations", stations.response.len());
-
-    // Get timetable for a station
-    if let Some(station) = stations.response.first() {
-        let boards = api.get_station_board_now(&station.code).await?;
-        println!("Found {} boards", boards.len());
-        
-        for board in boards {
-            println!("Station: {}", board.station_name);
-            for train in board.trains {
-                println!("  Train {} to {}", 
-                    train.train_number, 
-                    train.destination_station_name
-                );
-            }
-        }
-    }
+    let stations = client.search_stations("Porto").await?;
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+    let board = client.get_station_timetable("94-31039", &today, None).await?;
+    let journey = client.get_train_journey("530", &today).await?;
 
     Ok(())
 }
 ```
 
-### Advanced Configuration
-
-```rust
-use comboios::ComboiosApi;
-use reqwest::Client;
-use std::time::Duration;
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create custom HTTP client
-    let client = Client::builder()
-        .timeout(Duration::from_secs(30))
-        .user_agent("MyApp/1.0")
-        .build()?;
-
-    // Create API with custom client
-    let api = ComboiosApi::with_client(client);
-
-    let stations = api.get_stations("Porto").await?;
-
-    Ok(())
-}
-```
-
-## API Design
-
-The library uses a struct-based API design with the `ComboiosApi` client:
-
-- **Simple Creation**: `ComboiosApi::new()` - Uses default settings
-- **Custom Client**: `ComboiosApi::with_client(client)` - Bring your own reqwest client
-- **Builder Pattern**: Chain methods for easy configuration
-- **Connection Reuse**: Efficient HTTP connection pooling
+`Comboios::new()` scrapes live credentials from `cp.pt` on startup and caches them. The server rotates them automatically every 55 minutes.
 
 ## Data Sources
 
-This project integrates with official Portuguese transport APIs:
+- **CP API Gateway** (`api-gateway.cp.pt`) — timetables, train journeys, real-time delays. Credentials are fetched automatically from `cp.pt`.
+- **Infraestruturas de Portugal** (`infraestruturasdeportugal.pt`) — public API, used as fallback for train journey data.
 
-- IP (Infraestruturas de Portugal) - Real-time station boards
-- CP (Comboios de Portugal) - Station search
-
-Note: These are unofficial API endpoints discovered through web inspection. They may change or become unavailable without notice.
-
-## API Changes
-
-### v0.2.0 Migration Notes
-
-The project migrated from the old CP API to the new Infraestruturas de Portugal (IP) API:
-
-**Breaking Changes:**
-- `get_station_timetable(station_id)` → `get_station_board_now(station_id)`
-- Returns `Vec<StationBoard>` instead of `Vec<Timetable>`
-- `get_train_details()` is deprecated and no longer available
-- New types: `StationBoard`, `TrainEntry` with delay parsing
-
-See [MIGRATION.md](MIGRATION.md) for detailed migration guide.
+Both are unofficial endpoints. They may change without notice.
 
 ## Docker
 
 ```bash
-# Build image
-docker build -t comboios .
-
-# Run container
-docker run -p 3000:3000 comboios
-
-# With custom settings
-docker run -p 8080:8080 -e PORT=8080 -e RUST_LOG=debug comboios
+docker build -t comboios-rs .
+docker run -p 3000:3000 comboios-rs
 ```
 
 ## Development
 
 ```bash
-# Build entire workspace
 cargo build
-
-# Run tests
 cargo test
-
-# Build for release
-cargo build --release
-
-# Run clippy
-cargo clippy
+cargo clippy -- -W clippy::pedantic
 ```
-
-## Author
-
-Caio Silva - caio.cdcs@gmail.com
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
