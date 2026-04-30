@@ -2,14 +2,12 @@ use std::time::Duration;
 
 use reqwest::Client;
 
+use crate::constants::{IP_BASE_URL, USER_AGENT};
 use crate::domain::{
     journey::TrainJourney, station::StationResponse, station_timetable::StationBoardResponse,
     train_journey::IpTrainJourneyWrapper,
 };
 use crate::error::CoreError;
-
-const IP_BASE_URL: &str = "https://www.infraestruturasdeportugal.pt";
-const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/144.0.0.0 Safari/537.36";
 
 #[derive(Clone)]
 pub struct IpAdapter {

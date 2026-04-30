@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 use anyhow::Result;
 use axum::{BoxError, Json, Router, error_handling::HandleErrorLayer, routing::get};
@@ -16,6 +16,7 @@ use tower_http::{
 };
 
 use crate::{
+    configuration::Settings,
     domain::AppState,
     routes::{
         diagnostics::diagnostics,
@@ -38,29 +39,36 @@ struct ErrorBody {
 ///
 /// Returns an error if CP credentials cannot be fetched on startup, or if the
 /// TCP listener fails.
-pub async fn run(listener: TcpListener) -> Result<()> {
+pub async fn run(listener: TcpListener, settings: Settings) -> Result<()> {
     let api = Comboios::new().await?;
 
     tracing::info!("CP credentials loaded from cp.pt on startup");
 
-    let app_state = Arc::new(AppState { api: api.clone() });
+    let app_state = Arc::new(AppState {
+        api: api.clone(),
+        settings: settings.clone(),
+    });
 
-    // Background task: refresh CP credentials every 55 minutes
+    let refresh_interval_duration = settings.credential_refresh_interval;
     let api_for_bg = api.clone();
     tokio::spawn(async move {
-        let mut refresh_interval = interval(Duration::from_secs(55 * 60));
+        let mut refresh_ticker = interval(refresh_interval_duration);
 
-        // Wait for first interval, then refresh
-        refresh_interval.tick().await;
+        // Skip the immediate first tick so the first refresh happens after one
+        // full interval, not immediately on startup.
+        refresh_ticker.tick().await;
 
         loop {
             match api_for_bg.refresh_credentials_from_website().await {
                 Ok(()) => tracing::info!("Background credential refresh succeeded"),
                 Err(e) => tracing::warn!("Background credential refresh failed: {e}"),
             }
-            refresh_interval.tick().await;
+            refresh_ticker.tick().await;
         }
     });
+
+    let request_timeout = settings.request_timeout;
+    let cors_max_age = settings.cors_max_age;
 
     let app = Router::new()
         .route("/ping", get(health_check))
@@ -76,7 +84,7 @@ pub async fn run(listener: TcpListener) -> Result<()> {
                 .allow_methods(Any)
                 .allow_headers(Any)
                 .expose_headers(Any)
-                .max_age(Duration::from_secs(86400)),
+                .max_age(cors_max_age),
         )
         .layer(
             ServiceBuilder::new()
@@ -87,7 +95,7 @@ pub async fn run(listener: TcpListener) -> Result<()> {
                         .on_response(DefaultOnResponse::new().include_headers(true)),
                 )
                 .layer(HandleErrorLayer::new(handle_errors))
-                .timeout(Duration::from_secs(30))
+                .timeout(request_timeout)
                 .propagate_x_request_id(),
         )
         .with_state(app_state);
@@ -102,7 +110,7 @@ async fn handle_errors(err: BoxError) -> (StatusCode, Json<ErrorBody>) {
         (
             StatusCode::REQUEST_TIMEOUT,
             "TimeoutError",
-            "Request timed out after 30 seconds".to_string(),
+            "Request timed out".to_string(),
         )
     } else {
         tracing::error!("Unhandled error: {:?}", err);

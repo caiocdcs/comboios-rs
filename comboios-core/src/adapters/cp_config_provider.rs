@@ -5,10 +5,9 @@ use reqwest::Client;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 
+use crate::constants::{CP_CONFIG_URL, USER_AGENT};
 use crate::error::CoreError;
 
-const CP_CONFIG_URL: &str = "https://www.cp.pt/fe-config.json";
-const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36";
 const CONFIG_CACHE_TTL: Duration = Duration::from_secs(60 * 60);
 
 #[derive(Debug, Clone, Deserialize)]

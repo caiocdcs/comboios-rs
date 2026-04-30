@@ -1,9 +1,12 @@
 use comboios_core::Comboios;
 use serde::{Deserialize, Serialize};
 
+use crate::configuration::Settings;
+
 #[derive(Debug)]
 pub struct AppState {
     pub(crate) api: Comboios,
+    pub(crate) settings: Settings,
 }
 
 #[derive(Debug, Serialize)]

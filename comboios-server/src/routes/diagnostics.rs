@@ -1,12 +1,12 @@
+use std::sync::Arc;
 use std::time::Instant;
 
 use axum::Json;
+use axum::extract::State;
 use reqwest::Client;
 use serde::Serialize;
 
-const CP_API_URL: &str = "https://api-gateway.cp.pt/cp/services/travel-api";
-const IP_API_URL: &str = "https://www.infraestruturasdeportugal.pt";
-const TIMEOUT_MS: u64 = 5000;
+use crate::domain::AppState;
 
 #[derive(Serialize)]
 pub struct DiagnosticsResponse {
@@ -29,9 +29,20 @@ pub struct ApiStatus {
     error: Option<String>,
 }
 
-pub async fn diagnostics() -> Json<DiagnosticsResponse> {
-    let cp_status = check_api_health(CP_API_URL).await;
-    let ip_status = check_api_health(IP_API_URL).await;
+pub async fn diagnostics(State(state): State<Arc<AppState>>) -> Json<DiagnosticsResponse> {
+    let timeout = state.settings.diagnostics_timeout;
+    let cp_url = state.settings.cp_api_url.clone();
+    let ip_url = state.settings.ip_api_url.clone();
+
+    let client = Client::builder()
+        .timeout(timeout)
+        .build()
+        .unwrap_or_else(|_| Client::new());
+
+    let (cp_status, ip_status) = tokio::join!(
+        check_api_health(&client, &cp_url),
+        check_api_health(&client, &ip_url)
+    );
 
     let overall_status = if cp_status.reachable || ip_status.reachable {
         "ok"
@@ -49,12 +60,7 @@ pub async fn diagnostics() -> Json<DiagnosticsResponse> {
     })
 }
 
-async fn check_api_health(url: &str) -> ApiStatus {
-    let client = Client::builder()
-        .timeout(std::time::Duration::from_millis(TIMEOUT_MS))
-        .build()
-        .unwrap_or_else(|_| Client::new());
-
+async fn check_api_health(client: &Client, url: &str) -> ApiStatus {
     let start = Instant::now();
 
     match client.get(url).send().await {

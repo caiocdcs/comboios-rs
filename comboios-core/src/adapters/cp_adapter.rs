@@ -13,14 +13,12 @@ use crate::error::CoreError;
 
 type Result<T> = std::result::Result<T, CoreError>;
 
-const CP_STATIONS_API: &str = "https://api-gateway.cp.pt/cp/services/travel-api/stations";
-const CP_TRAINS_API: &str = "https://api-gateway.cp.pt/cp/services/travel-api/trains";
-
-const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36";
+use crate::constants::{CP_BASE_URL, USER_AGENT};
 
 #[derive(Clone)]
 pub struct CpAdapter {
     client: Client,
+    base_url: String,
     api_key: String,
     connect_id: String,
     connect_secret: String,
@@ -28,8 +26,18 @@ pub struct CpAdapter {
 
 impl CpAdapter {
     pub fn new(api_key: String, connect_id: String, connect_secret: String) -> Self {
+        Self::with_base_url(CP_BASE_URL, api_key, connect_id, connect_secret)
+    }
+
+    pub fn with_base_url(
+        base_url: &str,
+        api_key: String,
+        connect_id: String,
+        connect_secret: String,
+    ) -> Self {
         Self {
             client: Client::new(),
+            base_url: base_url.to_string(),
             api_key,
             connect_id,
             connect_secret,
@@ -37,8 +45,8 @@ impl CpAdapter {
     }
 
     pub async fn search_stations(&self, query: &str) -> Result<StationResponse> {
-        let url = CP_STATIONS_API;
-        let stations: Vec<CpStation> = self.get(url).await?;
+        let url = format!("{}/services/travel-api/stations", self.base_url);
+        let stations: Vec<CpStation> = self.get(&url).await?;
 
         let query_lower = query.to_lowercase();
         let matching: Vec<DomainStation> = stations
@@ -59,7 +67,10 @@ impl CpAdapter {
         date: &str,
         start_time: Option<&str>,
     ) -> Result<StationBoardResponse> {
-        let mut url = format!("{CP_STATIONS_API}/{station_id}/timetable/{date}");
+        let mut url = format!(
+            "{}/services/travel-api/stations/{}/timetable/{}",
+            self.base_url, station_id, date
+        );
         if let Some(start) = start_time {
             write!(url, "?start={start}").expect("writing to String never fails");
         }
@@ -73,7 +84,10 @@ impl CpAdapter {
     }
 
     pub async fn get_train_journey(&self, train_number: &str, date: &str) -> Result<TrainJourney> {
-        let url = format!("{CP_TRAINS_API}/{train_number}/timetable/{date}");
+        let url = format!(
+            "{}/services/travel-api/trains/{}/timetable/{}",
+            self.base_url, train_number, date
+        );
         let timetable: CpTrainTimetable = self.get(&url).await?;
         Ok(Self::convert_train_timetable(timetable))
     }

@@ -45,6 +45,8 @@ pub mod domain;
 pub mod error;
 pub mod query_builder;
 
+pub(crate) mod constants;
+
 pub use client::Comboios;
 pub use error::CoreError as Error;
 
