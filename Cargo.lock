@@ -213,7 +213,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "comboios"
+name = "comboios-core"
 version = "0.2.0"
 dependencies = [
  "anyhow",
@@ -241,7 +241,7 @@ dependencies = [
  "anyhow",
  "axum",
  "chrono",
- "comboios",
+ "comboios-core",
  "reqwest",
  "rmcp",
  "serde",
@@ -260,7 +260,7 @@ dependencies = [
  "anyhow",
  "axum",
  "chrono",
- "comboios",
+ "comboios-core",
  "reqwest",
  "serde",
  "serde_json",

@@ -1,12 +1,15 @@
 use chrono::Local;
-use comboios::{
+use comboios_core::{
     Comboios,
-    domain::{
-        station::StationResponse,
-        station_timetable::StationBoard,
-    },
+    domain::{station::StationResponse, station_timetable::StationBoard},
 };
-use rmcp::{Error as McpError, ServerHandler, model::*, tool};
+use rmcp::{
+    Error as McpError, ServerHandler,
+    model::{
+        CallToolResult, Content, Implementation, ProtocolVersion, ServerCapabilities, ServerInfo,
+    },
+    tool,
+};
 
 #[derive(Clone)]
 pub struct CpServer {
@@ -23,7 +26,6 @@ impl CpServer {
 
 #[tool(tool_box)]
 impl CpServer {
-
     #[tool(description = "Get comboios stations by name")]
     async fn get_stations_by_name(
         &self,
@@ -31,12 +33,12 @@ impl CpServer {
         #[schemars(description = "Get comboios stations by name")]
         station_name: String,
     ) -> Result<CallToolResult, McpError> {
-        let response = self._get_stations_from(&station_name).await;
+        let response = self.fetch_stations(&station_name).await;
         let stations = serde_json::to_string(&response).unwrap();
         Ok(CallToolResult::success(vec![Content::text(stations)]))
     }
 
-    async fn _get_stations_from(&self, station_name: &str) -> StationResponse {
+    async fn fetch_stations(&self, station_name: &str) -> StationResponse {
         self.api.search_stations(station_name).await.unwrap()
     }
 
@@ -47,17 +49,21 @@ impl CpServer {
         #[schemars(description = "Station ID (e.g., 94-31039 for Lisboa-Oriente)")]
         station_id: String,
     ) -> Result<CallToolResult, McpError> {
-        let response = self._get_station_timetable(&station_id).await;
+        let response = self.fetch_station_timetable(&station_id).await;
         let boards = serde_json::to_string(&response).unwrap();
         Ok(CallToolResult::success(vec![Content::text(boards)]))
     }
 
-    async fn _get_station_timetable(&self, station_id: &str) -> Vec<StationBoard> {
+    async fn fetch_station_timetable(&self, station_id: &str) -> Vec<StationBoard> {
         let now = Local::now();
         let date = now.format("%Y-%m-%d").to_string();
         let start_time = now.format("%H:%M").to_string();
-        
-        match self.api.get_station_timetable(station_id, &date, Some(&start_time)).await {
+
+        match self
+            .api
+            .get_station_timetable(station_id, &date, Some(&start_time))
+            .await
+        {
             Ok(response) => response.response,
             Err(_) => Vec::new(),
         }
@@ -76,7 +82,9 @@ impl CpServer {
                 let message = serde_json::to_string(&journey).unwrap();
                 Ok(CallToolResult::success(vec![Content::text(message)]))
             }
-            Err(e) => Ok(CallToolResult::success(vec![Content::text(format!("Error: {}", e))])),
+            Err(e) => Ok(CallToolResult::success(vec![Content::text(format!(
+                "Error: {e}"
+            ))])),
         }
     }
 }

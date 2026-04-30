@@ -1,8 +1,8 @@
 use axum::{
-    response::{IntoResponse, Response},
     Json,
+    response::{IntoResponse, Response},
 };
-use comboios::error::CoreError;
+use comboios_core::error::CoreError;
 use reqwest::StatusCode;
 use serde::Serialize;
 

@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
-use axum::{
-    Json,
-    extract::State,
-};
+use axum::{Json, extract::State};
 
 use crate::{
     domain::{AppResponse, AppState},
     error::AppError,
 };
 
+/// # Errors
+///
+/// Returns [`AppError`] if the credential refresh fails.
 #[tracing::instrument(skip(state))]
 pub async fn refresh_credentials(
     State(state): State<Arc<AppState>>,

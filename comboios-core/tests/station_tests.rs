@@ -1,7 +1,7 @@
 //! Tests for station and timetable domain models
 
-use comboios::domain::station::Station;
-use comboios::domain::station_timetable::{StationBoard, StationTimetable};
+use comboios_core::domain::station::Station;
+use comboios_core::domain::station_timetable::{StationBoard, StationTimetable};
 
 #[test]
 fn test_station_creation() {
@@ -58,23 +58,21 @@ fn test_station_board_creation() {
     let board = StationBoard {
         station_id: "94-31039".to_string(),
         station_name: "Lisboa Oriente".to_string(),
-        trains: vec![
-            StationTimetable {
-                train_number: 120,
-                service_type: "AP|Alfa Pendular".to_string(),
-                origin_station_name: "Porto".to_string(),
-                origin_station_id: "94-2006".to_string(),
-                destination_station_name: "Lisboa".to_string(),
-                destination_station_id: "94-30007".to_string(),
-                departure_time: Some("12:23".to_string()),
-                arrival_time: Some("12:22".to_string()),
-                platform: Some("8".to_string()),
-                delay: None,
-                operator: "CP".to_string(),
-                has_passed: false,
-                is_departure: true,
-            },
-        ],
+        trains: vec![StationTimetable {
+            train_number: 120,
+            service_type: "AP|Alfa Pendular".to_string(),
+            origin_station_name: "Porto".to_string(),
+            origin_station_id: "94-2006".to_string(),
+            destination_station_name: "Lisboa".to_string(),
+            destination_station_id: "94-30007".to_string(),
+            departure_time: Some("12:23".to_string()),
+            arrival_time: Some("12:22".to_string()),
+            platform: Some("8".to_string()),
+            delay: None,
+            operator: "CP".to_string(),
+            has_passed: false,
+            is_departure: true,
+        }],
     };
 
     assert_eq!(board.station_id, "94-31039");

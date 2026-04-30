@@ -1,4 +1,4 @@
-use comboios::Comboios;
+use comboios_core::Comboios;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]

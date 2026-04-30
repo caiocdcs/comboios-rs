@@ -1,4 +1,7 @@
+use std::sync::OnceLock;
+
 use crate::domain::{
+    cp_types::CpTrainTimetable,
     journey::{JourneyStatus, JourneyStop, StopStatus, TrainJourney},
     station::Station,
 };
@@ -45,63 +48,20 @@ pub struct TrainPassage {
     pub observations: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CpTrainTimetable {
-    pub train_number: u64,
-    #[serde(alias = "serviceCode")]
-    pub service_code: CpServiceCode,
-    #[serde(alias = "lastStationCode")]
-    pub last_station_code: Option<String>,
-    pub delay: Option<i32>,
-    pub occupancy: Option<u32>,
-    #[serde(alias = "trainStops")]
-    pub train_stops: Vec<CpTrainStop>,
-    pub status: String,
-    #[serde(alias = "hasDisruptions")]
-    pub has_disruptions: Option<bool>,
-    pub duration: Option<String>,
-    pub messages: Vec<CpMessage>,
-}
+static PREDICTED_TIME_RE: OnceLock<regex::Regex> = OnceLock::new();
+static DELAY_STATUS_RE: OnceLock<regex::Regex> = OnceLock::new();
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CpServiceCode {
-    pub code: String,
-    pub designation: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CpTrainStop {
-    pub station: CpStation,
-    pub arrival: Option<String>,
-    pub departure: Option<String>,
-    pub platform: Option<String>,
-    pub delay: Option<i32>,
-    #[serde(alias = "ETA")]
-    pub eta: Option<String>,
-    #[serde(alias = "ETD")]
-    pub etd: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CpStation {
-    pub code: String,
-    pub designation: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CpMessage {
-    pub message_type: Option<String>,
-    pub message_text: Option<String>,
-}
-
+/// # Panics
+///
+/// Never panics — the regex pattern is a compile-time constant and is always valid.
 fn parse_predicted_time(observations: &str) -> Option<String> {
     if observations.is_empty() {
         return None;
     }
 
-    let pattern = regex::Regex::new(r"Hora Prevista:(\d{2}:\d{2})").ok()?;
-    pattern
-        .captures(observations)
+    let re = PREDICTED_TIME_RE
+        .get_or_init(|| regex::Regex::new(r"Hora Prevista:(\d{2}:\d{2})").unwrap());
+    re.captures(observations)
         .map(|c| c.get(1).unwrap().as_str().to_string())
 }
 
@@ -120,27 +80,27 @@ fn calculate_delay_from_predicted(scheduled: &str, predicted: &str) -> Option<i3
     let scheduled_mins = parse_time(scheduled).map(|(h, m)| h * 60 + m)?;
     let predicted_mins = parse_time(predicted).map(|(h, m)| h * 60 + m)?;
 
-    let delay = predicted_mins as i32 - scheduled_mins as i32;
-    if delay > 0 {
-        Some(delay)
-    } else {
-        Some(0)
-    }
+    let delay = i32::try_from(predicted_mins).ok()? - i32::try_from(scheduled_mins).ok()?;
+    if delay > 0 { Some(delay) } else { Some(0) }
 }
 
+/// # Panics
+///
+/// Never panics — the regex pattern is a compile-time constant and is always valid.
 fn parse_delay_from_status(status: &str) -> Option<i32> {
     if status.is_empty() {
         return None;
     }
 
-    let delay_pattern = regex::Regex::new(r"Circula com atraso de (\d+) min").ok()?;
-    delay_pattern
-        .captures(status)
+    let re = DELAY_STATUS_RE
+        .get_or_init(|| regex::Regex::new(r"Circula com atraso de (\d+) min").unwrap());
+    re.captures(status)
         .and_then(|c| c.get(1))
         .and_then(|d| d.as_str().parse::<i32>().ok())
 }
 
 impl IpTrainJourneyResponse {
+    #[must_use]
     pub fn to_train_journey(&self, train_number: &str) -> TrainJourney {
         let now = chrono::Local::now();
         let current_time = now.format("%H:%M").to_string();
@@ -160,10 +120,8 @@ impl IpTrainJourneyResponse {
 
                 let status = if p.has_passed {
                     StopStatus::Passed
-                } else if is_past {
+                } else if is_past && i != 0 {
                     StopStatus::AtStop
-                } else if i == 0 && stop_time > &current_time {
-                    StopStatus::Scheduled
                 } else {
                     StopStatus::Scheduled
                 };
@@ -191,11 +149,11 @@ impl IpTrainJourneyResponse {
             train_number: train_number.to_string(),
             service_type: self.service_type.clone(),
             origin: Station {
-                code: "".to_string(),
+                code: String::new(),
                 designation: self.origin.clone(),
             },
             destination: Station {
-                code: "".to_string(),
+                code: String::new(),
                 designation: self.destination.clone(),
             },
             stops,
@@ -209,6 +167,7 @@ impl IpTrainJourneyResponse {
 }
 
 impl CpTrainTimetable {
+    #[must_use]
     pub fn to_train_journey(&self) -> TrainJourney {
         let stops: Vec<JourneyStop> = self
             .train_stops
@@ -264,29 +223,27 @@ impl CpTrainTimetable {
             })
             .collect();
 
-        let origin = self
-            .train_stops
-            .first()
-            .map(|s| Station {
-                code: s.station.code.clone(),
-                designation: s.station.designation.clone(),
-            })
-            .unwrap_or(Station {
+        let origin = self.train_stops.first().map_or(
+            Station {
                 code: String::new(),
                 designation: String::new(),
-            });
+            },
+            |s| Station {
+                code: s.station.code.clone(),
+                designation: s.station.designation.clone(),
+            },
+        );
 
-        let destination = self
-            .train_stops
-            .last()
-            .map(|s| Station {
-                code: s.station.code.clone(),
-                designation: s.station.designation.clone(),
-            })
-            .unwrap_or(Station {
+        let destination = self.train_stops.last().map_or(
+            Station {
                 code: String::new(),
                 designation: String::new(),
-            });
+            },
+            |s| Station {
+                code: s.station.code.clone(),
+                designation: s.station.designation.clone(),
+            },
+        );
 
         let journey_status = if self.status == "PASSED" || self.status == "ARRIVED" {
             JourneyStatus::Completed

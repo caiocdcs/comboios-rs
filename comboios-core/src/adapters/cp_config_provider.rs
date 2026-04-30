@@ -36,7 +36,7 @@ struct ConfigCache {
 
 impl ConfigCache {
     fn is_expired(&self) -> bool {
-        self.loaded_at.elapsed() > CONFIG_CACHE_TTL
+        self.config.is_none() || self.loaded_at.elapsed() > CONFIG_CACHE_TTL
     }
 }
 
@@ -46,7 +46,7 @@ impl CpConfigProvider {
             client: Client::new(),
             config_cache: Arc::new(RwLock::new(ConfigCache {
                 config: None,
-                loaded_at: Instant::now() - CONFIG_CACHE_TTL,
+                loaded_at: Instant::now(),
             })),
         }
     }
@@ -54,18 +54,29 @@ impl CpConfigProvider {
     pub async fn invalidate_cache(&self) {
         let mut cache = self.config_cache.write().await;
         cache.config = None;
-        cache.loaded_at = Instant::now() - CONFIG_CACHE_TTL;
     }
 
     pub async fn get_config(&self) -> Result<CpWebsiteConfig, CoreError> {
-        let mut cache = self.config_cache.write().await;
+        // Fast path: check under read lock first
+        {
+            let cache = self.config_cache.read().await;
+            if !cache.is_expired()
+                && let Some(ref config) = cache.config
+            {
+                return Ok(config.clone());
+            }
+        }
 
-        if !cache.is_expired() && cache.config.is_some() {
-            return Ok(cache.config.clone().unwrap());
+        // Slow path: refresh under write lock
+        let mut cache = self.config_cache.write().await;
+        // Re-check after acquiring write lock (another task may have refreshed)
+        if !cache.is_expired()
+            && let Some(ref config) = cache.config
+        {
+            return Ok(config.clone());
         }
 
         let config: CpWebsiteConfig = self.fetch_config().await?;
-
         cache.config = Some(config.clone());
         cache.loaded_at = Instant::now();
 
@@ -102,11 +113,7 @@ impl CpConfigProvider {
 
     pub async fn get_api_credentials(&self) -> Result<(String, String, String), CoreError> {
         let config = self.get_config().await?;
-        Ok((
-            config.travel_api_key,
-            config.xcck,
-            config.xccs,
-        ))
+        Ok((config.travel_api_key, config.xcck, config.xccs))
     }
 }
 

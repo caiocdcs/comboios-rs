@@ -7,48 +7,51 @@
 ///
 /// # Examples
 /// ```
-/// use comboios::providers::to_cp_id;
+/// use comboios_core::adapters::to_cp_id;
 ///
 /// assert_eq!(to_cp_id("9431039"), "94-31039");
 /// assert_eq!(to_cp_id("9402006"), "94-02006");
 /// ```
+#[must_use]
 pub fn to_cp_id(ip_id: &str) -> String {
     if ip_id.len() < 2 {
         return ip_id.to_string();
     }
 
-    // Split into first 2 digits and rest
     let prefix = &ip_id[..2];
     let suffix = &ip_id[2..];
 
-    // CP format keeps leading zeros in suffix
-    format!("{}-{}", prefix, suffix)
+    format!("{prefix}-{suffix}")
 }
 
 /// Convert CP station ID to IP format
 ///
 /// # Examples
 /// ```
-/// use comboios::providers::to_ip_id;
+/// use comboios_core::adapters::to_ip_id;
 ///
 /// assert_eq!(to_ip_id("94-31039"), "9431039");
 /// assert_eq!(to_ip_id("94-20006"), "9420006");
 /// ```
+#[must_use]
 pub fn to_ip_id(cp_id: &str) -> String {
-    cp_id.replace("-", "")
+    cp_id.replace('-', "")
 }
 
 /// Normalize station ID to IP format (removes dashes)
+#[must_use]
 pub fn normalize_station_id(id: &str) -> String {
-    id.replace("-", "").trim().to_string()
+    id.replace('-', "").trim().to_string()
 }
 
 /// Check if ID is in CP format (contains dash)
+#[must_use]
 pub fn is_cp_format(id: &str) -> bool {
     id.contains('-')
 }
 
 /// Check if ID is in IP format (numeric only)
+#[must_use]
 pub fn is_ip_format(id: &str) -> bool {
     !id.contains('-') && id.chars().all(|c| c.is_ascii_digit())
 }

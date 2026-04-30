@@ -4,7 +4,7 @@ use axum::{
     Json,
     extract::{Query, State},
 };
-use comboios::domain::station::Station;
+use comboios_core::domain::station::Station;
 use serde::Deserialize;
 
 use crate::{
@@ -17,6 +17,9 @@ pub struct SearchParams {
     query: String,
 }
 
+/// # Errors
+///
+/// Returns [`AppError`] if the CP API call fails.
 #[tracing::instrument(skip(state))]
 pub async fn stations(
     State(state): State<Arc<AppState>>,

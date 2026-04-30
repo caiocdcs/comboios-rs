@@ -2,7 +2,7 @@ use std::{sync::Arc, time::Duration};
 
 use anyhow::Result;
 use axum::{BoxError, Json, Router, error_handling::HandleErrorLayer, routing::get};
-use comboios::Comboios;
+use comboios_core::Comboios;
 use reqwest::StatusCode;
 use serde::Serialize;
 use tokio::net::TcpListener;
@@ -19,11 +19,11 @@ use crate::{
     domain::AppState,
     routes::{
         diagnostics::diagnostics,
-        health_check::health_check, 
+        health_check::health_check,
         refresh::refresh_credentials,
-        station_timetables::station_timetables, 
+        station_timetables::station_timetables,
         stations::stations,
-        trains::{trains, get_train_journey},
+        trains::{get_train_journey, trains},
     },
 };
 
@@ -34,6 +34,10 @@ struct ErrorBody {
     status: u16,
 }
 
+/// # Errors
+///
+/// Returns an error if CP credentials cannot be fetched on startup, or if the
+/// TCP listener fails.
 pub async fn run(listener: TcpListener) -> Result<()> {
     let api = Comboios::new().await?;
 
@@ -45,14 +49,14 @@ pub async fn run(listener: TcpListener) -> Result<()> {
     let api_for_bg = api.clone();
     tokio::spawn(async move {
         let mut refresh_interval = interval(Duration::from_secs(55 * 60));
-        
+
         // Wait for first interval, then refresh
         refresh_interval.tick().await;
-        
+
         loop {
             match api_for_bg.refresh_credentials_from_website().await {
-                Ok(_) => tracing::info!("Background credential refresh succeeded"),
-                Err(e) => tracing::warn!("Background credential refresh failed: {}", e),
+                Ok(()) => tracing::info!("Background credential refresh succeeded"),
+                Err(e) => tracing::warn!("Background credential refresh failed: {e}"),
             }
             refresh_interval.tick().await;
         }

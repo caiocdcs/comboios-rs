@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = [
-    "comboios",        # Main library
+    "comboios-core",   # Main library
     "comboios-server", # HTTP API server
     "comboios-mcp",    # MCP server
 ]
@@ -19,7 +19,7 @@ serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.0", features = ["full"] }
 anyhow = "1.0"
 reqwest = { version = "0.12", features = ["json"] }
-comboios = { path = "comboios" }
+comboios-core = { path = "comboios-core" }
 
 [workspace.package]
 authors = ["Caio Silva <caio.cdcs@gmail.com>"]

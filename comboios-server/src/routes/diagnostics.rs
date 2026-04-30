@@ -59,7 +59,7 @@ async fn check_api_health(url: &str) -> ApiStatus {
 
     match client.get(url).send().await {
         Ok(response) => {
-            let elapsed = start.elapsed().as_millis() as u64;
+            let elapsed = u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX);
             ApiStatus {
                 reachable: true,
                 response_time_ms: Some(elapsed),
@@ -67,13 +67,11 @@ async fn check_api_health(url: &str) -> ApiStatus {
                 error: None,
             }
         }
-        Err(e) => {
-            ApiStatus {
-                reachable: false,
-                response_time_ms: None,
-                status_code: None,
-                error: Some(e.to_string()),
-            }
-        }
+        Err(e) => ApiStatus {
+            reachable: false,
+            response_time_ms: None,
+            status_code: None,
+            error: Some(e.to_string()),
+        },
     }
 }

@@ -5,7 +5,7 @@ authors = ["Caio Silva <caio.cdcs@gmail.com>"]
 edition = "2024"
 
 [dependencies]
-comboios = { workspace = true }
+comboios-core = { workspace = true }
 anyhow = "1.0.98"
 rmcp = { version = "0.1", features = ["server", "transport-io"] }
 tokio = { version = "1.45.0", features = [

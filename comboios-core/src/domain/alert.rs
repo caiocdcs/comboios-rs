@@ -92,6 +92,7 @@ pub struct AlertResponse {
 
 impl ServiceAlert {
     /// Check if this alert affects a specific line
+    #[must_use]
     pub fn affects_line(&self, line: &str) -> bool {
         self.affected_lines.is_empty()
             || self
@@ -101,6 +102,7 @@ impl ServiceAlert {
     }
 
     /// Check if this alert affects a specific station
+    #[must_use]
     pub fn affects_station(&self, station: &str) -> bool {
         self.affected_stations.is_empty()
             || self
@@ -110,6 +112,7 @@ impl ServiceAlert {
     }
 
     /// Check if this alert is currently active
+    #[must_use]
     pub fn is_active(&self) -> bool {
         let now = Utc::now();
 

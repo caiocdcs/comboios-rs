@@ -1,7 +1,7 @@
 //! Tests for domain models
 
-use comboios::domain::journey::{JourneyStatus, JourneyStop, StopStatus, TrainJourney};
-use comboios::domain::station::Station;
+use comboios_core::domain::journey::{JourneyStatus, JourneyStop, StopStatus, TrainJourney};
+use comboios_core::domain::station::Station;
 
 fn make_stop(num: usize, status: StopStatus) -> JourneyStop {
     JourneyStop {

@@ -1,6 +1,6 @@
 //! Tests for error handling
 
-use comboios::error::CoreError;
+use comboios_core::error::CoreError;
 
 #[test]
 fn test_api_error_display() {

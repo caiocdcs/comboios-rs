@@ -4,14 +4,17 @@ use axum::{
     Json,
     extract::{Path, State},
 };
-use comboios::domain::station_timetable::StationBoard;
 use chrono::Local;
+use comboios_core::domain::station_timetable::StationBoard;
 
 use crate::{
     domain::{AppResponse, AppState},
     error::AppError,
 };
 
+/// # Errors
+///
+/// Returns [`AppError`] if the CP API call fails.
 #[tracing::instrument(skip(state))]
 pub async fn station_timetables(
     State(state): State<Arc<AppState>>,
@@ -23,7 +26,12 @@ pub async fn station_timetables(
     let date = now.format("%Y-%m-%d").to_string();
     let start_time = now.format("%H:%M").to_string();
 
-    let boards = state.api.get_station_timetable(&station_id, &date, Some(&start_time)).await?;
+    let boards = state
+        .api
+        .get_station_timetable(&station_id, &date, Some(&start_time))
+        .await?;
 
-    Ok(Json(AppResponse { data: boards.response }))
+    Ok(Json(AppResponse {
+        data: boards.response,
+    }))
 }
