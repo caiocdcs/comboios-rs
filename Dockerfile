@@ -34,6 +34,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=rust-builder /app/target/release/comboios-server /app/comboios-server
@@ -43,5 +44,8 @@ ENV PORT=3000
 ENV RUST_LOG=info
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3000/ping || exit 1
 
 CMD ["/app/comboios-server"]
