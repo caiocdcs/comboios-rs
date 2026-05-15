@@ -100,7 +100,6 @@ fn parse_delay_from_status(status: &str) -> Option<i32> {
 }
 
 impl IpTrainJourneyResponse {
-    #[must_use]
     pub fn to_train_journey(&self, train_number: &str) -> TrainJourney {
         let now = chrono::Local::now();
         let current_time = now.format("%H:%M").to_string();
@@ -167,8 +166,30 @@ impl IpTrainJourneyResponse {
 }
 
 impl CpTrainTimetable {
-    #[must_use]
     pub fn to_train_journey(&self) -> TrainJourney {
+        let last_passed_idx = self
+            .last_station_code
+            .as_ref()
+            .and_then(|code| {
+                self.train_stops
+                    .iter()
+                    .position(|s| &s.station.code == code)
+            })
+            .or_else(|| {
+                // Fallback: infer from eta/etd when last_station_code is not
+                // provided by the API. Stops with actual arrival or departure
+                // times are considered passed.
+                self.train_stops
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, s)| s.eta.is_some() || s.etd.is_some())
+                    .last()
+                    .map(|(i, _)| i)
+            });
+
+        let train_in_progress = self.status != "SCHEDULED" || last_passed_idx.is_some();
+        let all_passed = self.status == "PASSED" || self.status == "ARRIVED";
+
         let stops: Vec<JourneyStop> = self
             .train_stops
             .iter()
@@ -176,23 +197,24 @@ impl CpTrainTimetable {
             .map(|(i, stop)| {
                 let scheduled_departure = stop.departure.clone().or(stop.arrival.clone());
                 let scheduled_arrival = stop.arrival.clone().or(stop.departure.clone());
-                let actual_departure = stop.etd.clone();
                 let actual_arrival = stop.eta.clone();
+                let actual_departure = stop.etd.clone();
 
-                let has_actual_departure = actual_departure.is_some();
-                let has_actual_arrival = actual_arrival.is_some();
-                let has_passed = has_actual_departure || has_actual_arrival;
+                let has_passed = last_passed_idx.map_or(all_passed, |last_idx| i <= last_idx);
 
-                let status = if has_actual_arrival && has_actual_departure {
-                    StopStatus::Passed
-                } else if has_actual_departure {
+                let status = if !train_in_progress && i == 0 {
+                    StopStatus::Scheduled
+                } else if has_passed {
                     if i == 0 {
                         StopStatus::Departed
+                    } else if Some(i) == last_passed_idx
+                        && actual_arrival.is_some()
+                        && actual_departure.is_none()
+                    {
+                        StopStatus::AtStop
                     } else {
                         StopStatus::Passed
                     }
-                } else if has_actual_arrival {
-                    StopStatus::AtStop
                 } else {
                     StopStatus::Scheduled
                 };
@@ -247,7 +269,10 @@ impl CpTrainTimetable {
 
         let journey_status = if self.status == "PASSED" || self.status == "ARRIVED" {
             JourneyStatus::Completed
-        } else if self.status == "NEAR_NEXT" || self.status == "AT_STATION" {
+        } else if self.status == "NEAR_NEXT"
+            || self.status == "AT_STATION"
+            || last_passed_idx.is_some()
+        {
             JourneyStatus::InProgress
         } else {
             JourneyStatus::Scheduled

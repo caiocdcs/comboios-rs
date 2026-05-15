@@ -4,7 +4,7 @@ use reqwest::Client;
 
 use crate::domain::cp_types::{CpStation, CpStationStop, CpTimetableResponse, CpTrainTimetable};
 use crate::domain::{
-    journey::{JourneyStatus, JourneyStop, StopStatus, TrainJourney},
+    journey::TrainJourney,
     station::Station as DomainStation,
     station::StationResponse,
     station_timetable::{StationBoard, StationBoardResponse, StationTimetable},
@@ -89,7 +89,7 @@ impl CpAdapter {
             self.base_url, train_number, date
         );
         let timetable: CpTrainTimetable = self.get(&url).await?;
-        Ok(Self::convert_train_timetable(timetable))
+        Ok(timetable.to_train_journey())
     }
 
     fn convert_timetable_to_board(
@@ -143,129 +143,6 @@ impl CpAdapter {
             operator: "CP".to_string(),
             has_passed,
             is_departure,
-        }
-    }
-
-    fn build_journey_stop(
-        i: usize,
-        stop: &crate::domain::cp_types::CpTrainStop,
-        last_passed_idx: Option<usize>,
-        train_in_progress: bool,
-        all_passed: bool,
-    ) -> JourneyStop {
-        let scheduled_departure = stop.departure.clone().or(stop.arrival.clone());
-        let scheduled_arrival = stop.arrival.clone().or(stop.departure.clone());
-        let actual_departure = stop.etd.clone();
-        let actual_arrival = stop.eta.clone();
-
-        let has_passed = last_passed_idx.map_or(all_passed, |last_idx| i <= last_idx);
-
-        let status = if !train_in_progress && i == 0 {
-            StopStatus::Scheduled
-        } else if has_passed {
-            if i == 0 {
-                StopStatus::Departed
-            } else if Some(i) == last_passed_idx
-                && actual_arrival.is_some()
-                && actual_departure.is_none()
-            {
-                StopStatus::AtStop
-            } else {
-                StopStatus::Passed
-            }
-        } else {
-            StopStatus::Scheduled
-        };
-
-        JourneyStop {
-            station: DomainStation {
-                code: stop.station.code.clone(),
-                designation: stop.station.designation.clone(),
-            },
-            scheduled_arrival: scheduled_arrival.unwrap_or_default(),
-            scheduled_departure: scheduled_departure.unwrap_or_default(),
-            actual_arrival,
-            actual_departure,
-            platform: stop.platform.clone(),
-            status,
-            delay_minutes: stop.delay,
-            stop_number: i + 1,
-            has_passed: Some(has_passed),
-            predicted_time: if stop.eta.is_some() && stop.delay.unwrap_or(0) > 0 {
-                stop.eta.clone()
-            } else {
-                None
-            },
-        }
-    }
-
-    fn convert_train_timetable(timetable: CpTrainTimetable) -> TrainJourney {
-        let last_passed_idx = timetable.last_station_code.as_ref().and_then(|code| {
-            timetable
-                .train_stops
-                .iter()
-                .position(|s| &s.station.code == code)
-        });
-
-        let train_in_progress = timetable.status != "SCHEDULED";
-        let all_passed = timetable.status == "PASSED" || timetable.status == "ARRIVED";
-
-        let stops: Vec<JourneyStop> = timetable
-            .train_stops
-            .iter()
-            .enumerate()
-            .map(|(i, stop)| {
-                Self::build_journey_stop(i, stop, last_passed_idx, train_in_progress, all_passed)
-            })
-            .collect();
-
-        let origin = timetable.train_stops.first().map_or(
-            DomainStation {
-                code: String::new(),
-                designation: String::new(),
-            },
-            |s| DomainStation {
-                code: s.station.code.clone(),
-                designation: s.station.designation.clone(),
-            },
-        );
-
-        let destination = timetable.train_stops.last().map_or(
-            DomainStation {
-                code: String::new(),
-                designation: String::new(),
-            },
-            |s| DomainStation {
-                code: s.station.code.clone(),
-                designation: s.station.designation.clone(),
-            },
-        );
-
-        let journey_status = if timetable.status == "PASSED" || timetable.status == "ARRIVED" {
-            JourneyStatus::Completed
-        } else if timetable.status == "NEAR_NEXT"
-            || timetable.status == "AT_STATION"
-            || last_passed_idx.is_some()
-        {
-            JourneyStatus::InProgress
-        } else {
-            JourneyStatus::Scheduled
-        };
-
-        TrainJourney {
-            train_number: timetable.train_number.to_string(),
-            service_type: format!(
-                "{}|{}",
-                timetable.service_code.code, timetable.service_code.designation
-            ),
-            origin,
-            destination,
-            stops,
-            status: journey_status,
-            delay_minutes: timetable.delay,
-            operator: "CP".to_string(),
-            observations: None,
-            duration: timetable.duration,
         }
     }
 

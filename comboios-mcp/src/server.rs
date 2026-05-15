@@ -1,8 +1,5 @@
 use chrono::Local;
-use comboios_core::{
-    Comboios,
-    domain::{station::StationResponse, station_timetable::StationBoard},
-};
+use comboios_core::{Comboios, domain::station_timetable::StationBoard};
 use rmcp::{
     Error as McpError, ServerHandler,
     model::{
@@ -18,8 +15,12 @@ pub struct CpServer {
 
 impl CpServer {
     pub async fn new() -> Self {
-        Self {
-            api: Comboios::new().await.expect("Failed to initialize CP API"),
+        match Comboios::new().await {
+            Ok(api) => Self { api },
+            Err(e) => {
+                tracing::error!("Failed to initialize CP API: {e}");
+                panic!("Failed to initialize CP API: {e}");
+            }
         }
     }
 }
@@ -33,13 +34,16 @@ impl CpServer {
         #[schemars(description = "Get comboios stations by name")]
         station_name: String,
     ) -> Result<CallToolResult, McpError> {
-        let response = self.fetch_stations(&station_name).await;
-        let stations = serde_json::to_string(&response).unwrap();
-        Ok(CallToolResult::success(vec![Content::text(stations)]))
-    }
-
-    async fn fetch_stations(&self, station_name: &str) -> StationResponse {
-        self.api.search_stations(station_name).await.unwrap()
+        match self.api.search_stations(&station_name).await {
+            Ok(response) => {
+                let stations = serde_json::to_string(&response)
+                    .unwrap_or_else(|e| format!("Serialization error: {e}"));
+                Ok(CallToolResult::success(vec![Content::text(stations)]))
+            }
+            Err(e) => Ok(CallToolResult::success(vec![Content::text(format!(
+                "Error searching stations: {e}"
+            ))])),
+        }
     }
 
     #[tool(description = "Get station timetable (departures/arrivals) for the next 12 hours")]
@@ -49,24 +53,28 @@ impl CpServer {
         #[schemars(description = "Station ID (e.g., 94-31039 for Lisboa-Oriente)")]
         station_id: String,
     ) -> Result<CallToolResult, McpError> {
-        let response = self.fetch_station_timetable(&station_id).await;
-        let boards = serde_json::to_string(&response).unwrap();
-        Ok(CallToolResult::success(vec![Content::text(boards)]))
+        match self.fetch_station_timetable(&station_id).await {
+            Ok(boards) => {
+                let text = serde_json::to_string(&boards)
+                    .unwrap_or_else(|e| format!("Serialization error: {e}"));
+                Ok(CallToolResult::success(vec![Content::text(text)]))
+            }
+            Err(e) => Ok(CallToolResult::success(vec![Content::text(format!(
+                "Error fetching timetable: {e}"
+            ))])),
+        }
     }
 
-    async fn fetch_station_timetable(&self, station_id: &str) -> Vec<StationBoard> {
+    async fn fetch_station_timetable(&self, station_id: &str) -> Result<Vec<StationBoard>, String> {
         let now = Local::now();
         let date = now.format("%Y-%m-%d").to_string();
         let start_time = now.format("%H:%M").to_string();
 
-        match self
-            .api
+        self.api
             .get_station_timetable(station_id, &date, Some(&start_time))
             .await
-        {
-            Ok(response) => response.response,
-            Err(_) => Vec::new(),
-        }
+            .map(|r| r.response)
+            .map_err(|e| e.to_string())
     }
 
     #[tool(description = "Get train journey details by train number")]
@@ -79,11 +87,12 @@ impl CpServer {
         let date = Local::now().format("%Y-%m-%d").to_string();
         match self.api.get_train_journey(&train_id, &date).await {
             Ok(journey) => {
-                let message = serde_json::to_string(&journey).unwrap();
+                let message = serde_json::to_string(&journey)
+                    .unwrap_or_else(|e| format!("Serialization error: {e}"));
                 Ok(CallToolResult::success(vec![Content::text(message)]))
             }
             Err(e) => Ok(CallToolResult::success(vec![Content::text(format!(
-                "Error: {e}"
+                "Error fetching train journey: {e}"
             ))])),
         }
     }

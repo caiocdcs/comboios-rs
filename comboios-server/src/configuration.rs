@@ -51,7 +51,6 @@ pub struct Settings {
 impl Settings {
     /// Load configuration from environment variables, using defaults for any
     /// that are absent or unparseable.
-    #[must_use]
     pub fn from_env() -> Self {
         Self {
             host: env_string("HOST", "0.0.0.0"),
@@ -75,7 +74,6 @@ impl Settings {
     /// Bind address in `host:port` form, ready to pass to [`TcpListener::bind`].
     ///
     /// [`TcpListener::bind`]: tokio::net::TcpListener::bind
-    #[must_use]
     pub fn bind_address(&self) -> String {
         format!("{}:{}", self.host, self.port)
     }

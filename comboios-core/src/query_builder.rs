@@ -25,7 +25,6 @@ pub struct StationQuery {
 
 impl StationQuery {
     /// Create a new, empty station query builder.
-    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -53,7 +52,6 @@ impl StationQuery {
     }
 
     /// Return the configured result limit, if any.
-    #[must_use]
     pub fn get_limit(&self) -> Option<usize> {
         self.limit
     }
@@ -83,7 +81,6 @@ pub struct TrainEntryFilter {
 
 impl TrainEntryFilter {
     /// Create a new, empty filter that matches all train entries.
-    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -156,7 +153,6 @@ pub struct TimetableFilter {
 #[allow(deprecated)]
 impl TimetableFilter {
     /// Create a new timetable filter builder
-    #[must_use]
     #[deprecated(since = "0.2.0", note = "Use TrainEntryFilter instead")]
     pub fn new() -> Self {
         Self::default()
