@@ -8,7 +8,7 @@ use tokio::sync::RwLock;
 use crate::constants::{CP_CONFIG_URL, USER_AGENT};
 use crate::error::CoreError;
 
-const CONFIG_CACHE_TTL: Duration = Duration::from_secs(60 * 60);
+const CONFIG_CACHE_TTL: Duration = Duration::from_hours(1);
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CpWebsiteConfig {

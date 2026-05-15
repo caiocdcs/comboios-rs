@@ -106,9 +106,9 @@ impl Default for Settings {
             cp_api_url: "https://api-gateway.cp.pt/cp/services/travel-api".to_owned(),
             ip_api_url: "https://www.infraestruturasdeportugal.pt".to_owned(),
             request_timeout: Duration::from_secs(30),
-            diagnostics_timeout: Duration::from_millis(5000),
-            credential_refresh_interval: Duration::from_secs(3300),
-            cors_max_age: Duration::from_secs(86400),
+            diagnostics_timeout: Duration::from_secs(5),
+            credential_refresh_interval: Duration::from_mins(55),
+            cors_max_age: Duration::from_hours(24),
             log_filter: "comboios_server=debug,tower_http=debug".to_owned(),
         }
     }
