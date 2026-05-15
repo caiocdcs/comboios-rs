@@ -88,10 +88,28 @@ Both are unofficial endpoints. They may change without notice.
 
 ## Docker
 
+**Server only**
+
 ```bash
 docker build -t comboios-rs .
 docker run -p 3000:3000 comboios-rs
 ```
+
+**Server + UI (docker-compose)**
+
+```bash
+docker compose up --build
+```
+
+The API server runs on port 3000 and the UI on port 8080 by default.
+Override with environment variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `SERVER_PORT` | `3000` | API server host port |
+| `UI_PORT` | `8080` | Web UI host port |
+| `API_HOST` | `localhost` | Hostname the browser uses to reach the API |
+| `RUST_LOG` | `comboios_server=info,tower_http=info` | Log filter |
 
 ## Development
 

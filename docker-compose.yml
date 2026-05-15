@@ -1,0 +1,28 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${SERVER_PORT:-3000}:3000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3000
+      - RUST_LOG=${RUST_LOG:-comboios_server=info,tower_http=info}
+      - REQUEST_TIMEOUT_SECS=${REQUEST_TIMEOUT_SECS:-30}
+      - CREDENTIAL_REFRESH_SECS=${CREDENTIAL_REFRESH_SECS:-3300}
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: ./comboios-ui
+      dockerfile: Dockerfile
+      args:
+        # The UI runs in the browser, so the API URL must be reachable
+        # from the host machine, not from inside Docker.
+        - VITE_API_URL=http://${API_HOST:-localhost}:${SERVER_PORT:-3000}
+    ports:
+      - "${UI_PORT:-8080}:80"
+    depends_on:
+      - server
+    restart: unless-stopped
