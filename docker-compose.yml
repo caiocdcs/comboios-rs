@@ -1,5 +1,6 @@
 services:
   server:
+    image: ghcr.io/caiocdcs/comboios-server:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -14,6 +15,7 @@ services:
     restart: unless-stopped
 
   ui:
+    image: ghcr.io/caiocdcs/comboios-ui:latest
     build:
       context: ./comboios-ui
       dockerfile: Dockerfile
