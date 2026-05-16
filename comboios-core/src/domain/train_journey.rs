@@ -182,8 +182,7 @@ impl CpTrainTimetable {
                 self.train_stops
                     .iter()
                     .enumerate()
-                    .filter(|(_, s)| s.eta.is_some() || s.etd.is_some())
-                    .last()
+                    .rfind(|(_, s)| s.eta.is_some() || s.etd.is_some())
                     .map(|(i, _)| i)
             });
 
