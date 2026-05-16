@@ -24,13 +24,13 @@ server {
     index index.html;
 
     location ~ ^/(stations|trains|ping|diagnostics|refresh) {
-        proxy_pass \${API_PROXY_PASS};
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_pass ${API_PROXY_PASS};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
     }
 
     location / {
-        try_files \$uri \$uri/ /index.html;
+        try_files $uri $uri/ /index.html;
     }
 }
 EOF
