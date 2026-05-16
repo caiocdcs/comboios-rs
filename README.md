@@ -42,6 +42,8 @@ cargo run -p comboios-mcp
 
 ## Configuration
 
+### API Server
+
 All settings have defaults and can be overridden via environment variables.
 
 | Variable | Default | Description |
@@ -50,9 +52,17 @@ All settings have defaults and can be overridden via environment variables.
 | `PORT` | `3000` | Port |
 | `RUST_LOG` | `comboios_server=debug,tower_http=debug` | Log filter |
 | `REQUEST_TIMEOUT_SECS` | `30` | Per-request timeout |
+| `DIAGNOSTICS_TIMEOUT_MS` | `5000` | Health-check probe timeout |
 | `CREDENTIAL_REFRESH_SECS` | `3300` | CP credential rotation interval |
+| `CORS_MAX_AGE_SECS` | `86400` | CORS pre-flight max age |
 | `CP_API_URL` | `https://api-gateway.cp.pt/cp/services/travel-api` | CP base URL |
 | `IP_API_URL` | `https://www.infraestruturasdeportugal.pt` | IP base URL |
+
+### Web UI (Docker)
+
+| Variable | Default | Description |
+|---|---|---|
+| `API_PROXY_PASS` | `http://server:3000` | Backend URL nginx proxies API requests to |
 
 ## Library Usage
 
@@ -91,14 +101,13 @@ Both are unofficial endpoints. They may change without notice.
 **Server only**
 
 ```bash
-docker build -t comboios-rs .
-docker run -p 3000:3000 comboios-rs
+docker run -p 3000:3000 ghcr.io/caiocdcs/comboios-server:latest
 ```
 
 **Server + UI (docker-compose)**
 
 ```bash
-docker compose up --build
+docker compose up
 ```
 
 The API server runs on port 3000 and the UI on port 8080 by default.
@@ -108,8 +117,10 @@ Override with environment variables:
 |---|---|---|
 | `SERVER_PORT` | `3000` | API server host port |
 | `UI_PORT` | `8080` | Web UI host port |
-| `API_HOST` | `localhost` | Hostname the browser uses to reach the API |
 | `RUST_LOG` | `comboios_server=info,tower_http=info` | Log filter |
+| `API_PROXY_PASS` | `http://server:3000` | Backend URL the UI nginx proxies API to |
+
+The UI uses nginx to proxy API requests (`/stations`, `/trains`, `/ping`, `/diagnostics`, `/refresh`) to the backend. This means the frontend always talks to its own origin -- no build-time API URL needed. Set `API_PROXY_PASS` to change the backend target.
 
 ## Development
 

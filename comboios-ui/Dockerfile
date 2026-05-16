@@ -8,20 +8,26 @@ COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 COPY . .
-ARG VITE_API_URL=http://localhost:3000
-ENV VITE_API_URL=$VITE_API_URL
 RUN bun run build
 
 FROM nginx:alpine
 
+RUN apk add --no-cache gettext
+
 COPY --from=builder /app/build /usr/share/nginx/html
 
-COPY <<EOF /etc/nginx/conf.d/default.conf
+COPY <<EOF /etc/nginx/conf.d/default.conf.template
 server {
     listen 80;
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
+
+    location ~ ^/(stations|trains|ping|diagnostics|refresh) {
+        proxy_pass \${API_PROXY_PASS};
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
 
     location / {
         try_files \$uri \$uri/ /index.html;
@@ -31,4 +37,4 @@ EOF
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD envsubst '${API_PROXY_PASS}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'
