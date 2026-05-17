@@ -16,7 +16,7 @@ RUN apk add --no-cache gettext
 
 COPY --from=builder /app/build /usr/share/nginx/html
 
-COPY <<EOF /etc/nginx/conf.d/default.conf.template
+COPY <<'EOF' /etc/nginx/conf.d/default.conf.template
 server {
     listen 80;
     server_name _;
