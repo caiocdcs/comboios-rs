@@ -4,23 +4,23 @@
   import { page } from '$app/stores';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
-  
+
   let menuOpen = false;
   let isNavigating = false;
-  
+
   beforeNavigate(() => {
     isNavigating = true;
   });
-  
+
   afterNavigate(() => {
     isNavigating = false;
     menuOpen = false;
   });
-  
+
   function toggleMenu() {
     menuOpen = !menuOpen;
   }
-  
+
   function closeMenu() {
     menuOpen = false;
   }
@@ -37,7 +37,7 @@
           <span class="hidden sm:inline">Comboios de Portugal</span>
           <span class="sm:hidden">Comboios</span>
         </a>
-        
+
         <div class="flex items-center gap-2">
           {#if isNavigating}
             <div class="flex items-center gap-2 mr-2">
@@ -45,10 +45,10 @@
               <span class="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">Loading...</span>
             </div>
           {/if}
-          
+
           <ThemeToggle />
-          
-          <button 
+
+          <button
             class="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             on:click={toggleMenu}
             aria-label="Toggle menu"
@@ -66,28 +66,28 @@
           </button>
         </div>
       </div>
-      
+
       <nav class="hidden md:flex items-center gap-4 pb-3">
-        <a 
-          href="/" 
+        <a
+          href="/"
           class="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors {$page.url.pathname === '/' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}"
         >
           Stations
         </a>
-        <a 
-          href="/about" 
+        <a
+          href="/about"
           class="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors {$page.url.pathname === '/about' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}"
         >
           About
         </a>
       </nav>
     </div>
-    
+
     {#if menuOpen}
       <div class="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <nav class="flex flex-col p-2">
-          <a 
-            href="/" 
+          <a
+            href="/"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
             on:click={closeMenu}
           >
@@ -97,8 +97,8 @@
             </svg>
             Stations
           </a>
-          <a 
-            href="/about" 
+          <a
+            href="/about"
             class="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
             on:click={closeMenu}
           >
@@ -111,21 +111,22 @@
       </div>
     {/if}
   </header>
-  
+
   {#if isNavigating}
     <div class="h-1 bg-primary-600 dark:bg-primary-400 animate-pulse"></div>
   {/if}
-  
+
   <main class="flex-grow py-6">
     <div class="max-w-7xl mx-auto px-4">
       <slot />
     </div>
   </main>
-  
+
   <footer class="border-t border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800">
     <div class="max-w-7xl mx-auto px-4 py-6">
       <div class="text-center text-sm text-gray-500 dark:text-gray-400">
         <p>Comboios de Portugal - Unofficial application</p>
+        <p class="mt-1 text-xs">{COMMIT_HASH}</p>
       </div>
     </div>
   </footer>

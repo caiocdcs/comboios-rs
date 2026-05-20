@@ -53,6 +53,10 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=,format=short
 
+      - name: Extract short SHA
+        id: sha
+        run: echo "short=$(echo ${{ github.sha }} | cut -c1-7)" >> "$GITHUB_OUTPUT"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
@@ -63,3 +67,5 @@ jobs:
           cache-from: type=registry,ref=${{ matrix.image }}:latest
           cache-to: type=inline
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            COMMIT_HASH=${{ steps.sha.outputs.short }}

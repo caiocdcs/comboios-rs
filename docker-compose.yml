@@ -19,6 +19,8 @@ services:
     build:
       context: ./comboios-ui
       dockerfile: Dockerfile
+      args:
+        COMMIT_HASH: ${COMMIT_HASH:-dev}
     ports:
       - "${UI_PORT:-8080}:80"
     environment:
