@@ -112,6 +112,7 @@ impl CpAdapter {
         let trains: Vec<StationTimetable> = response
             .station_stops
             .iter()
+            .filter(|stop| stop.etd.is_none() && stop.eta.is_none())
             .map(|stop| Self::convert_stop_to_timetable(stop, station_id))
             .collect();
 
