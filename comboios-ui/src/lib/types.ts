@@ -19,12 +19,15 @@ export interface TrainEntry {
   destination_station_name: string;
   departure_time: string | null;
   arrival_time: string | null;
+  estimated_departure?: string | null;
+  estimated_arrival?: string | null;
   platform?: string;
   delay?: number;
   service_type: string;
   has_passed: boolean;
   is_departure: boolean;
   operator: string;
+  observations?: string | null;
 }
 
 export interface StationBoard {
@@ -41,15 +44,21 @@ export interface ServiceAlert {
   id: string;
   title: string;
   description: string;
-  severity: 'info' | 'warning' | 'critical';
-  category: 'infrastructure' | 'schedule' | 'weather' | 'technical' | 'event' | 'other';
+  severity: "info" | "warning" | "critical";
+  category:
+    | "infrastructure"
+    | "schedule"
+    | "weather"
+    | "technical"
+    | "event"
+    | "other";
   affected_lines: string[];
   affected_stations: string[];
   start_time: string | null;
   end_time: string | null;
   last_updated: string;
   url: string | null;
-  source: 'infraestruturas-portugal' | 'comboios-portugal' | 'user-reported';
+  source: "infraestruturas-portugal" | "comboios-portugal" | "user-reported";
 }
 
 export interface JourneyStop {
@@ -59,7 +68,7 @@ export interface JourneyStop {
   actual_time?: string;
   delay_minutes?: number;
   platform?: string;
-  status: 'passed' | 'current' | 'upcoming';
+  status: "passed" | "current" | "upcoming";
   has_passed?: boolean;
   predicted_time?: string;
 }
@@ -72,7 +81,7 @@ export interface TrainDetails {
   operator: string;
   stops: JourneyStop[];
   date: string;
-  status: 'scheduled' | 'in-progress' | 'completed' | 'delayed';
+  status: "scheduled" | "in-progress" | "completed" | "delayed";
   delay_minutes?: number;
   observations?: string;
   duration?: string;
@@ -84,7 +93,10 @@ export function parseDelayMinutes(observations: string): number | null {
   return match ? parseInt(match[1], 10) : null;
 }
 
-export function formatTimeWithDelay(time: string, delayMinutes: number | null): string {
+export function formatTimeWithDelay(
+  time: string,
+  delayMinutes: number | null,
+): string {
   if (!delayMinutes || delayMinutes <= 0) return time;
   return `${time} (+${delayMinutes} min)`;
 }

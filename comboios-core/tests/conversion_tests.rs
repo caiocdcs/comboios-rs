@@ -2,8 +2,7 @@
 //! These are pure unit tests - no network calls.
 
 use comboios_core::domain::cp_types::{
-    CpServiceCode, CpStationSimple, CpStationStop, CpTimetableResponse, CpTrainStop,
-    CpTrainTimetable,
+    CpServiceCode, CpStationSimple, CpTrainStop, CpTrainTimetable,
 };
 use comboios_core::domain::journey::{JourneyStatus, StopStatus};
 use comboios_core::domain::station_timetable::TrainEntry;
@@ -460,95 +459,6 @@ fn test_delay_minutes_zero_not_returned_when_absent() {
 }
 
 // ---------------------------------------------------------------------------
-// Station timetable: passed trains are excluded
+// Station timetable: adapter conversion tests are in cp_adapter.rs (inline)
+// because the adapter module is pub(crate).
 // ---------------------------------------------------------------------------
-
-fn make_station_stop(eta: Option<String>, etd: Option<String>) -> CpStationStop {
-    CpStationStop {
-        train_number: 120,
-        train_service: make_service_code(),
-        train_origin: make_station("94-001", "Lisboa"),
-        train_destination: make_station("94-002", "Porto"),
-        arrival_time: Some("10:00".to_string()),
-        departure_time: Some("10:02".to_string()),
-        platform: None,
-        delay: None,
-        occupancy: None,
-        eta,
-        etd,
-        supression: None,
-    }
-}
-
-fn make_timetable_response(stops: Vec<CpStationStop>) -> CpTimetableResponse {
-    CpTimetableResponse {
-        station_stops: stops,
-        messages: vec![],
-    }
-}
-
-#[test]
-fn test_station_stop_with_eta_is_passed() {
-    let stop = make_station_stop(Some("10:05".to_string()), None);
-    assert!(stop.eta.is_some() || stop.etd.is_some());
-}
-
-#[test]
-fn test_station_stop_with_etd_is_passed() {
-    let stop = make_station_stop(None, Some("10:07".to_string()));
-    assert!(stop.eta.is_some() || stop.etd.is_some());
-}
-
-#[test]
-fn test_station_stop_without_eta_etd_is_upcoming() {
-    let stop = make_station_stop(None, None);
-    assert!(stop.eta.is_none() && stop.etd.is_none());
-}
-
-#[test]
-fn test_passed_stops_filtered_from_timetable() {
-    let upcoming = make_station_stop(None, None);
-    let passed_eta = make_station_stop(Some("10:05".to_string()), None);
-    let passed_etd = make_station_stop(None, Some("10:07".to_string()));
-    let passed_both = make_station_stop(Some("10:05".to_string()), Some("10:07".to_string()));
-
-    let response = make_timetable_response(vec![upcoming, passed_eta, passed_etd, passed_both]);
-    let filtered: Vec<_> = response
-        .station_stops
-        .iter()
-        .filter(|stop| stop.eta.is_none() && stop.etd.is_none())
-        .collect();
-
-    assert_eq!(filtered.len(), 1);
-    assert_eq!(filtered[0].train_number, 120);
-}
-
-#[test]
-fn test_all_upcoming_stops_kept() {
-    let stop1 = make_station_stop(None, None);
-    let stop2 = make_station_stop(None, None);
-
-    let response = make_timetable_response(vec![stop1, stop2]);
-    let filtered: Vec<_> = response
-        .station_stops
-        .iter()
-        .filter(|stop| stop.eta.is_none() && stop.etd.is_none())
-        .collect();
-
-    assert_eq!(filtered.len(), 2);
-}
-
-#[test]
-fn test_all_passed_stops_removed() {
-    let passed1 = make_station_stop(Some("10:05".to_string()), None);
-    let passed2 = make_station_stop(None, Some("10:07".to_string()));
-
-    let response = make_timetable_response(vec![passed1, passed2]);
-    let filtered: Vec<_> = response
-        .station_stops
-        .iter()
-        .filter(|stop| stop.eta.is_none() && stop.etd.is_none())
-        .collect();
-
-    assert!(filtered.is_empty());
-}

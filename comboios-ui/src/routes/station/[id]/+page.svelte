@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { getStationTimetable } from '$lib/api';
   import { ApiException } from '$lib/errors';
   import ServiceTypeBadge from '$lib/components/ServiceTypeBadge.svelte';
@@ -17,6 +17,7 @@
   let loading = false;
   let error: string | null = null;
   let filter = 'all';
+  let refreshInterval: ReturnType<typeof setInterval>;
 
 
   let currentPage = 1;
@@ -26,13 +27,20 @@
     if (boards.length === 0) {
       loadTimetable();
     }
+    refreshInterval = setInterval(() => loadTimetable(true), 60000);
   });
 
-  async function loadTimetable() {
+  onDestroy(() => {
+    clearInterval(refreshInterval);
+  });
+
+  async function loadTimetable(silent = false) {
     const currentStationId = $page.params.id;
     if (!currentStationId) return;
 
-    loading = true;
+    if (!silent) {
+      loading = true;
+    }
     error = null;
 
     try {
@@ -40,14 +48,18 @@
       boards = response.data;
       stationId = currentStationId;
     } catch (e) {
-      if (e instanceof ApiException) {
-        error = 'Failed to load timetable. Please try again.';
-      } else {
-        error = 'Something went wrong.';
+      if (!silent) {
+        if (e instanceof ApiException) {
+          error = 'Failed to load timetable. Please try again.';
+        } else {
+          error = 'Something went wrong.';
+        }
+        boards = [];
       }
-      boards = [];
     } finally {
-      loading = false;
+      if (!silent) {
+        loading = false;
+      }
     }
   }
 
@@ -64,16 +76,29 @@
     goto(`/train/${train.train_number}?date=${today}`);
   }
 
+  function getTrainInfo(train: TrainEntry) {
+    const arrivalTime = train.estimated_arrival || train.arrival_time;
+    const departureTime = train.estimated_departure || train.departure_time;
+    const displayTime = arrivalTime || departureTime || '-';
+    const scheduledTime = train.estimated_arrival ? train.arrival_time : train.estimated_departure ? train.departure_time : null;
+    const delayMinutes = train.delay;
+    const isDelayed = delayMinutes && delayMinutes > 0;
+    const isCancelled = train.observations && /supress|cancel/i.test(train.observations.toLowerCase());
+    const trainStatus = isCancelled ? 'cancelled' : train.has_passed ? 'departed' : isDelayed ? 'delayed' : 'on-time';
+    const movementLabel = train.is_departure ? 'Departing' : 'Arriving';
+    return { arrivalTime, departureTime, displayTime, scheduledTime, delayMinutes, isDelayed, isCancelled, trainStatus, movementLabel };
+  }
+
   // Pagination computed values
   $: allTrains = getAllTrains();
   $: sortedTrains = [...allTrains].sort((a, b) => {
-    const parseTime = (t: string | undefined): number => {
+    const parseTime = (t: string | null | undefined): number => {
       if (!t) return 0;
       const [h, m] = t.split(':').map(Number);
       return (h || 0) * 60 + (m || 0);
     };
-    const timeA = parseTime(a.departure_time || a.arrival_time);
-    const timeB = parseTime(b.departure_time || b.arrival_time);
+    const timeA = parseTime(a.estimated_arrival || a.arrival_time || a.estimated_departure || a.departure_time);
+    const timeB = parseTime(b.estimated_arrival || b.arrival_time || b.estimated_departure || b.departure_time);
     return timeA - timeB;
   });
   $: totalPages = Math.ceil(sortedTrains.length / itemsPerPage);
@@ -237,9 +262,7 @@
         <!-- Mobile Card View -->
         <div class="lg:hidden space-y-3">
           {#each paginatedTrains as train}
-            {@const delayMinutes = train.delay}
-            {@const isDelayed = delayMinutes && delayMinutes > 0}
-            {@const trainStatus = train.has_passed ? 'departed' : isDelayed ? 'delayed' : 'on-time'}
+            {@const info = getTrainInfo(train)}
             <button
               type="button"
               class="w-full p-4 text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -256,16 +279,28 @@
                   <div class="text-xs text-gray-600 dark:text-gray-400 truncate">
                     → {train.destination_station_name}
                   </div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {info.movementLabel}
+                  </div>
                 </div>
                 <div class="text-right flex-shrink-0">
                   <div class="font-mono text-base font-bold text-gray-900 dark:text-gray-100">
-                    {train.departure_time || train.arrival_time || '-'}
+                    {info.displayTime}
                   </div>
-                  {#if isDelayed}
-                    <div class="text-xs text-warning-600 dark:text-warning-400 font-medium">+{delayMinutes} min</div>
+                  {#if info.arrivalTime && info.departureTime && info.arrivalTime !== info.departureTime}
+                    <div class="text-xs text-gray-500 dark:text-gray-400">departs {info.departureTime}</div>
+                  {/if}
+                  {#if info.isDelayed && info.scheduledTime && info.displayTime !== info.scheduledTime}
+                    <div class="text-xs text-gray-500 dark:text-gray-400 line-through">{info.scheduledTime}</div>
+                  {/if}
+                  {#if info.isDelayed}
+                    <div class="text-xs text-warning-600 dark:text-warning-400 font-medium">+{info.delayMinutes} min</div>
+                  {/if}
+                  {#if train.observations}
+                    <div class="text-xs text-red-600 dark:text-red-400 font-medium truncate max-w-[120px]">{train.observations}</div>
                   {/if}
                   <div class="mt-1">
-                    <TrainStatusBadge status={trainStatus} delayMinutes={delayMinutes} />
+                    <TrainStatusBadge status={info.trainStatus} delayMinutes={info.delayMinutes} />
                   </div>
                 </div>
               </div>
@@ -290,9 +325,7 @@
             </div>
             <!-- Data Rows -->
             {#each paginatedTrains as train}
-              {@const delayMinutes = train.delay}
-              {@const isDelayed = delayMinutes && delayMinutes > 0}
-              {@const trainStatus = train.has_passed ? 'departed' : isDelayed ? 'delayed' : 'on-time'}
+              {@const info = getTrainInfo(train)}
               <div
                 class="grid grid-cols-5 gap-2 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors items-center"
                 on:click={() => viewTrainDetails(train)}
@@ -303,18 +336,25 @@
                 <div class="text-left min-w-0">
                   <div class="font-medium text-gray-900 dark:text-gray-100 truncate">{train.origin_station_name}</div>
                   <div class="text-sm text-gray-600 dark:text-gray-400 truncate">→ {train.destination_station_name}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">{info.movementLabel}</div>
                 </div>
                 <div class="text-left">
                   <div class="font-mono text-gray-900 dark:text-gray-100">
-                    {train.departure_time || train.arrival_time || '-'}{#if isDelayed}<span class="text-warning-600 dark:text-warning-400 text-xs"> +{delayMinutes}m</span>{/if}
+                    {info.displayTime}{#if info.isDelayed && info.scheduledTime && info.displayTime !== info.scheduledTime}<span class="text-gray-500 dark:text-gray-400 text-xs line-through ml-1">{info.scheduledTime}</span><span class="text-warning-600 dark:text-warning-400 text-xs ml-1">+{info.delayMinutes}m</span>{/if}
                   </div>
+                  {#if info.arrivalTime && info.departureTime && info.arrivalTime !== info.departureTime}
+                    <div class="text-xs text-gray-500 dark:text-gray-400">departs {info.departureTime}</div>
+                  {/if}
+                  {#if train.observations}
+                    <div class="text-xs text-red-600 dark:text-red-400 truncate">{train.observations}</div>
+                  {/if}
                 </div>
                 <div class="text-left">
                   <div class="font-mono text-gray-900 dark:text-gray-100">#{train.train_number}</div>
                   <div class="text-xs text-gray-600 dark:text-gray-400">{train.operator}</div>
                 </div>
                 <div class="text-left">
-                  <TrainStatusBadge status={trainStatus} delayMinutes={delayMinutes} />
+                  <TrainStatusBadge status={info.trainStatus} delayMinutes={info.delayMinutes} />
                 </div>
               </div>
             {/each}

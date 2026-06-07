@@ -92,27 +92,17 @@ impl CpAdapter {
         Ok(timetable.to_train_journey())
     }
 
-    fn convert_timetable_to_board(
+    pub(crate) fn convert_timetable_to_board(
         station_id: &str,
         response: &CpTimetableResponse,
     ) -> StationBoard {
-        let station_name = response
-            .station_stops
-            .iter()
-            .find(|s| s.train_origin.code == station_id || s.train_destination.code == station_id)
-            .map(|s| {
-                if s.train_origin.code == station_id {
-                    s.train_origin.designation.clone()
-                } else {
-                    s.train_destination.designation.clone()
-                }
-            })
-            .unwrap_or_default();
+        // CP API does not include the queried station name in the timetable
+        // response. The name is populated server-side from a cached station list.
+        let station_name = String::new();
 
         let trains: Vec<StationTimetable> = response
             .station_stops
             .iter()
-            .filter(|stop| stop.etd.is_none() && stop.eta.is_none())
             .map(|stop| Self::convert_stop_to_timetable(stop, station_id))
             .collect();
 
@@ -123,8 +113,10 @@ impl CpAdapter {
         }
     }
 
-    fn convert_stop_to_timetable(stop: &CpStationStop, _station_id: &str) -> StationTimetable {
-        let has_passed = stop.etd.is_some() || stop.eta.is_some();
+    pub(crate) fn convert_stop_to_timetable(
+        stop: &CpStationStop,
+        _station_id: &str,
+    ) -> StationTimetable {
         let is_departure = stop.departure_time.is_some();
 
         StationTimetable {
@@ -139,10 +131,13 @@ impl CpAdapter {
             destination_station_id: stop.train_destination.code.clone(),
             departure_time: stop.departure_time.clone(),
             arrival_time: stop.arrival_time.clone(),
+            estimated_departure: stop.etd.clone(),
+            estimated_arrival: stop.eta.clone(),
             platform: stop.platform.clone(),
             delay: stop.delay,
+            observations: stop.supression.clone(),
             operator: "CP".to_string(),
-            has_passed,
+            has_passed: false,
             is_departure,
         }
     }
@@ -173,5 +168,82 @@ impl CpAdapter {
 
         let data = response.json::<T>().await?;
         Ok(data)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::adapters::cp_adapter::CpAdapter;
+    use crate::domain::cp_types::{
+        CpServiceCode, CpStationSimple, CpStationStop, CpTimetableResponse,
+    };
+
+    fn make_station(code: &str, designation: &str) -> CpStationSimple {
+        CpStationSimple {
+            code: code.to_string(),
+            designation: designation.to_string(),
+        }
+    }
+
+    fn make_stop() -> CpStationStop {
+        CpStationStop {
+            train_number: 120,
+            train_service: CpServiceCode {
+                code: "IC".to_string(),
+                designation: "Intercidades".to_string(),
+            },
+            train_origin: make_station("94-001", "Lisboa"),
+            train_destination: make_station("94-002", "Porto"),
+            arrival_time: Some("10:00".to_string()),
+            departure_time: Some("10:02".to_string()),
+            platform: Some("3".to_string()),
+            delay: Some(5),
+            occupancy: None,
+            eta: Some("10:05".to_string()),
+            etd: Some("10:07".to_string()),
+            supression: Some("Supressão".to_string()),
+        }
+    }
+
+    #[test]
+    fn convert_stop_maps_all_fields() {
+        let stop = make_stop();
+        let timetable = CpAdapter::convert_stop_to_timetable(&stop, "94-123");
+
+        assert_eq!(timetable.train_number, 120);
+        assert_eq!(timetable.service_type, "IC|Intercidades");
+        assert_eq!(timetable.origin_station_name, "Lisboa");
+        assert_eq!(timetable.destination_station_name, "Porto");
+        assert_eq!(timetable.arrival_time, Some("10:00".to_string()));
+        assert_eq!(timetable.departure_time, Some("10:02".to_string()));
+        assert_eq!(timetable.estimated_arrival, Some("10:05".to_string()));
+        assert_eq!(timetable.estimated_departure, Some("10:07".to_string()));
+        assert_eq!(timetable.platform, Some("3".to_string()));
+        assert_eq!(timetable.delay, Some(5));
+        assert_eq!(timetable.observations, Some("Supressão".to_string()));
+        assert_eq!(timetable.operator, "CP");
+        assert!(!timetable.has_passed);
+        assert!(timetable.is_departure);
+    }
+
+    #[test]
+    fn convert_board_includes_all_stops_no_filtering() {
+        let stop1 = make_stop();
+        let mut stop2 = make_stop();
+        stop2.eta = None;
+        stop2.etd = None;
+        let mut stop3 = make_stop();
+        stop3.eta = None;
+
+        let response = CpTimetableResponse {
+            station_stops: vec![stop1, stop2, stop3],
+            messages: vec![],
+        };
+
+        let board = CpAdapter::convert_timetable_to_board("94-123", &response);
+
+        assert_eq!(board.trains.len(), 3);
+        assert_eq!(board.station_id, "94-123");
+        assert_eq!(board.station_name, "");
     }
 }

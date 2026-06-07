@@ -1,4 +1,5 @@
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 use anyhow::Result;
 use axum::{BoxError, Json, Router, error_handling::HandleErrorLayer, routing::get};
@@ -44,9 +45,25 @@ pub async fn run(listener: TcpListener, settings: Settings) -> Result<()> {
 
     tracing::info!("CP credentials loaded from cp.pt on startup");
 
+    let station_names = match api.search_stations("").await {
+        Ok(response) => {
+            let mut map = HashMap::new();
+            for station in response.response {
+                map.insert(station.code, station.designation);
+            }
+            tracing::info!("Loaded {} stations into cache", map.len());
+            RwLock::new(map)
+        }
+        Err(e) => {
+            tracing::warn!("Failed to fetch station list at startup: {e}");
+            RwLock::new(HashMap::new())
+        }
+    };
+
     let app_state = Arc::new(AppState {
         api: api.clone(),
         settings: settings.clone(),
+        station_names,
     });
 
     let refresh_interval_duration = settings.credential_refresh_interval;

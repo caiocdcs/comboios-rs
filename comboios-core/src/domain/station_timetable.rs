@@ -50,6 +50,14 @@ pub struct StationTimetable {
     /// Delay in minutes; `None` when the train is on time or the value is
     /// not yet known.
     pub delay: Option<i32>,
+    /// Estimated (or actual) departure time in `HH:MM` format.
+    /// `None` for arrival-only movements or when no real-time data is available.
+    pub estimated_departure: Option<String>,
+    /// Estimated (or actual) arrival time in `HH:MM` format.
+    /// `None` for departure-only movements or when no real-time data is available.
+    pub estimated_arrival: Option<String>,
+    /// Free-text observations from CP (e.g. cancellation notices).
+    pub observations: Option<String>,
     /// Operating company name.
     pub operator: String,
     /// `true` if the train has already passed through this station.

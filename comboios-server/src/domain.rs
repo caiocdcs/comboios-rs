@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::sync::RwLock;
+
 use comboios_core::Comboios;
 use serde::{Deserialize, Serialize};
 
@@ -7,6 +10,8 @@ use crate::configuration::Settings;
 pub struct AppState {
     pub(crate) api: Comboios,
     pub(crate) settings: Settings,
+    /// Cached station code → name mapping, populated at startup from CP.
+    pub(crate) station_names: RwLock<HashMap<String, String>>,
 }
 
 #[derive(Debug, Serialize)]
