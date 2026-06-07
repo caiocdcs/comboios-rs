@@ -33,12 +33,11 @@ pub async fn station_timetables(
 
     let today = chrono::NaiveDate::parse_from_str(&date, "%Y-%m-%d").ok();
     for board in &mut boards.response {
-        if board.station_name.is_empty() {
-            if let Ok(names) = state.station_names.read() {
-                if let Some(name) = names.get(&board.station_id) {
-                    board.station_name = name.clone();
-                }
-            }
+        if board.station_name.is_empty()
+            && let Ok(names) = state.station_names.read()
+            && let Some(name) = names.get(&board.station_id)
+        {
+            board.station_name = name.clone();
         }
 
         for train in &mut board.trains {
@@ -75,16 +74,15 @@ fn compute_has_passed(
         .or(estimated_arrival.as_ref())
         .or(arrival_time.as_ref());
 
-    if let Some(time) = time_to_check {
-        if let (Some(today_date), Ok(t)) = (today, chrono::NaiveTime::parse_from_str(time, "%H:%M"))
-        {
-            let train_naive = today_date.and_time(t);
-            return chrono::Local
-                .from_local_datetime(&train_naive)
-                .single()
-                .map(|dt| dt <= now)
-                .unwrap_or(false);
-        }
+    if let Some(time) = time_to_check
+        && let (Some(today_date), Ok(t)) = (today, chrono::NaiveTime::parse_from_str(time, "%H:%M"))
+    {
+        let train_naive = today_date.and_time(t);
+        return chrono::Local
+            .from_local_datetime(&train_naive)
+            .single()
+            .map(|dt| dt <= now)
+            .unwrap_or(false);
     }
     false
 }
