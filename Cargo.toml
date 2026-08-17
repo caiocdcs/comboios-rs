@@ -25,4 +25,4 @@ comboios-core = { path = "comboios-core" }
 authors = ["Caio Silva <caio.cdcs@gmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
-version = "0.2.0"
+version = "0.3.0"

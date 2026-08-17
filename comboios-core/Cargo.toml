@@ -1,6 +1,6 @@
 [package]
 name = "comboios-core"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Caio Silva <caio.cdcs@gmail.com>"]
 edition = "2024"
 description = "Unofficial Rust client for Comboios de Portugal (CP) APIs to search stations, get timetables, and retrieve train information"
