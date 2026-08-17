@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+- Station timetable route now uses `Europe/Lisbon` time instead of host-local time, so boards are correct in UTC containers (was: one hour of already-departed trains shown in summer).
+- Passed trains are now dropped from the board response using effective time (scheduled + delay, or eta/etd when present); delayed trains whose scheduled time already passed stay visible via a 60-minute lookback window on the CP `start` parameter.
+
 ## [0.2.0] - 2026-04-30
 
 ### Added
