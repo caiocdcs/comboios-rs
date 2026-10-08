@@ -45,12 +45,10 @@ pub async fn run(listener: TcpListener, settings: Settings) -> Result<()> {
 
     tracing::info!("CP credentials loaded from cp.pt on startup");
 
-    let station_names = match api.search_stations("").await {
-        Ok(response) => {
-            let mut map = HashMap::new();
-            for station in response.response {
-                map.insert(station.code, station.designation);
-            }
+    // Boards from CP carry no station name; resolve it from this cache. If the
+    // fetch fails here, the board route retries it on first use.
+    let station_names = match fetch_station_names(&api).await {
+        Ok(map) => {
             tracing::info!("Loaded {} stations into cache", map.len());
             RwLock::new(map)
         }
@@ -146,4 +144,20 @@ async fn handle_errors(err: BoxError) -> (StatusCode, Json<ErrorBody>) {
             status: status.as_u16(),
         }),
     )
+}
+
+/// Station code → name for every CP station.
+///
+/// # Errors
+///
+/// Returns [`comboios_core::Error`] if the CP station list cannot be fetched.
+pub(crate) async fn fetch_station_names(
+    api: &Comboios,
+) -> Result<HashMap<String, String>, comboios_core::Error> {
+    let stations = api.list_stations().await?;
+    Ok(stations
+        .response
+        .into_iter()
+        .map(|s| (s.code, s.designation))
+        .collect())
 }

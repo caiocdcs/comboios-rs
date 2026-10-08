@@ -67,3 +67,16 @@ export function addRecentStation(station: FavoriteStation) {
     [station, ...list.filter((s) => s.id !== station.id)].slice(0, MAX_RECENT)
   );
 }
+
+/**
+ * Correct the stored name of a station once the real one is known.
+ * Older versions could save the station code as its name.
+ */
+export function renameStation(id: string, name: string) {
+  const fix = (list: FavoriteStation[]) =>
+    list.some((s) => s.id === id && s.name !== name)
+      ? list.map((s) => (s.id === id ? { ...s, name } : s))
+      : list;
+  favorites.update(fix);
+  recentStations.update(fix);
+}

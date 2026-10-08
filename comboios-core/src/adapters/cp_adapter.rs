@@ -51,12 +51,31 @@ impl CpAdapter {
             ));
         }
 
-        let url = format!("{}/services/travel-api/stations", self.base_url);
-        let stations: Vec<CpStation> = self.get(&url).await?;
+        let stations = self.fetch_stations().await?;
 
         Ok(StationResponse {
             response: Self::filter_stations(&stations, query),
         })
+    }
+
+    /// Every station CP knows about, e.g. to resolve station codes to names.
+    pub async fn list_stations(&self) -> Result<StationResponse> {
+        let stations = self.fetch_stations().await?;
+
+        Ok(StationResponse {
+            response: stations
+                .into_iter()
+                .map(|s| DomainStation {
+                    code: s.code,
+                    designation: s.designation,
+                })
+                .collect(),
+        })
+    }
+
+    async fn fetch_stations(&self) -> Result<Vec<CpStation>> {
+        let url = format!("{}/services/travel-api/stations", self.base_url);
+        self.get(&url).await
     }
 
     /// Keep stations whose name contains every word of `query`.
@@ -235,6 +254,41 @@ mod tests {
             .into_iter()
             .map(|s| s.designation)
             .collect()
+    }
+
+    fn mock_adapter(base_url: &str) -> CpAdapter {
+        CpAdapter::with_base_url(base_url, "key".into(), "id".into(), "secret".into())
+    }
+
+    #[tokio::test]
+    async fn list_stations_returns_every_station() {
+        use wiremock::matchers::{method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/services/travel-api/stations"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(
+                r#"[{"code":"94-31039","designation":"Lisboa Oriente"},
+                    {"code":"94-69005","designation":"Cais do Sodre"}]"#,
+            ))
+            .mount(&server)
+            .await;
+
+        let stations = mock_adapter(&server.uri()).list_stations().await.unwrap();
+
+        let codes: Vec<_> = stations.response.iter().map(|s| s.code.as_str()).collect();
+        assert_eq!(codes, ["94-31039", "94-69005"]);
+        assert_eq!(stations.response[0].designation, "Lisboa Oriente");
+    }
+
+    #[tokio::test]
+    async fn search_rejects_blank_query() {
+        let err = mock_adapter("http://unused.invalid")
+            .search_stations("   ")
+            .await
+            .unwrap_err();
+        assert!(matches!(err, crate::error::CoreError::InvalidInput(_)));
     }
 
     #[test]

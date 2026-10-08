@@ -13,6 +13,7 @@ use comboios_core::domain::station_timetable::{StationBoard, StationTimetable};
 use crate::{
     domain::{AppResponse, AppState},
     error::AppError,
+    startup::fetch_station_names,
 };
 
 /// How far back in time to ask CP for train movements. CP filters `start` by
@@ -53,6 +54,20 @@ pub async fn station_timetables(
         .api
         .get_station_timetable(&station_id, &date, start_time.as_deref())
         .await?;
+
+    let names_missing = boards.response.iter().any(|b| b.station_name.is_empty());
+    let cache_empty = state.station_names.read().map_or(true, |n| n.is_empty());
+    if names_missing && cache_empty {
+        // The startup fetch failed; without names the UI can only show codes
+        match fetch_station_names(&state.api).await {
+            Ok(map) => {
+                if let Ok(mut names) = state.station_names.write() {
+                    *names = map;
+                }
+            }
+            Err(e) => tracing::warn!("Failed to fetch station list: {e}"),
+        }
+    }
 
     for board in &mut boards.response {
         if board.station_name.is_empty()

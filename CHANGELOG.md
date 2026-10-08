@@ -11,6 +11,7 @@
 - Train journey: live "next stop" summary (expected time, countdown, platform) and expected arrival at the destination; auto-refreshes every 30 s while visible; Share button.
 
 ### Fixed
+- Station pages showed, and saved to favourites, the station code instead of its name: the server's station-name cache was built with a blank search, which station search now rejects. It now uses a dedicated `list_stations()` and refills an empty cache on demand; favourites and recents saved with a code are renamed the next time the station is opened.
 - Station search is accent-insensitive and matches every word ("sodré", "São Bento", "Campanhã" found nothing because CP station names have no diacritics); blank queries are rejected.
 - Train journey dates (server, MCP) and journey stop status use `Europe/Lisbon` instead of the host timezone; the UI computes "today" in Lisbon instead of UTC.
 - Timetable "Try Again" button passed the click event as the `silent` flag, hiding the loading state and errors on retry.

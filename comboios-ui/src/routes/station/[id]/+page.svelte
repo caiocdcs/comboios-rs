@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { getStationTimetable } from '$lib/api';
   import { addMinutes, formatCountdown, lisbonNowMinutes, lisbonToday, minutesUntil } from '$lib/date';
-  import { addRecentStation, favorites, toggleFavorite } from '$lib/favorites';
+  import { addRecentStation, favorites, renameStation, toggleFavorite } from '$lib/favorites';
   import { liveRefresh } from '$lib/live';
   import { ApiException } from '$lib/errors';
   import ServiceTypeBadge from '$lib/components/ServiceTypeBadge.svelte';
@@ -36,8 +36,8 @@
     lastUpdated = new Date();
     refreshFailed = false;
     windowMinutes = WINDOW_STEP_MINUTES;
-    // The loader falls back to the raw id when the name is unknown; skip those
-    if (data.stationName && data.stationName !== data.stationId) {
+    if (data.stationName) {
+      renameStation(data.stationId, data.stationName);
       addRecentStation({ id: data.stationId, name: data.stationName });
     }
   }
@@ -122,7 +122,7 @@
     .sort((a, b) => a.until - b.until);
   $: visibleRows = rows.filter((r, i) => i < MIN_VISIBLE || r.until <= windowMinutes);
   $: hiddenCount = rows.length - visibleRows.length;
-  $: stationName = data.stationName || 'Station';
+  $: stationName = data.stationName || `Station ${data.stationId}`;
   $: isFavorite = $favorites.some((f) => f.id === data.stationId);
 </script>
 

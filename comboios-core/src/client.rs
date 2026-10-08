@@ -124,6 +124,16 @@ impl Comboios {
         cp.search_stations(query).await
     }
 
+    /// List every station, e.g. to build a code → name lookup.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError`] if the CP API call fails.
+    pub async fn list_stations(&self) -> Result<StationResponse, CoreError> {
+        let cp = self.cp.read().await;
+        cp.list_stations().await
+    }
+
     /// Retrieve the departure/arrival board for a station on a given date.
     ///
     /// - `station_id` — CP station identifier (e.g. `"94-31039"` for Lisboa-Oriente).
