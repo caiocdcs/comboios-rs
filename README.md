@@ -141,15 +141,8 @@ on a flaky connection.
 
 Browsers only enable this over **HTTPS** (service workers and the Android
 install prompt need a secure origin), so plain `http://192.168.x.x:8080` won't
-do. On a homelab the easiest option is Tailscale:
-
-```bash
-docker compose up -d
-tailscale serve --bg 8080   # https://<machine>.<tailnet>.ts.net
-```
-
-Any reverse proxy with a TLS certificate (Caddy, Traefik, nginx) in front of
-port 8080 works too. Then open the URL on the phone:
+do. Put a reverse proxy with a TLS certificate (Caddy, Traefik, nginx) in front
+of port 8080, then open its URL on the phone:
 
 - **iOS (Safari):** Share → Add to Home Screen
 - **Android (Chrome):** menu → Install app
