@@ -2,25 +2,23 @@
 
 ## Prerequisites
 
-- Rust (edition 2024)
-- Node.js 20+ / Bun (for the frontend)
+Either Nix (`nix develop`, or `direnv allow` with the provided `.envrc`), which
+provides everything below, or:
+
+- Rust 1.85+ (edition 2024)
+- Bun (and Node.js 22 for parity with the Docker build)
+- [just](https://just.systems)
 
 ## Development
 
 ```bash
-cargo build
-cargo test
-cargo clippy -- -W clippy::pedantic
-```
-
-```bash
-cd comboios-ui
-bun install && bun run dev
+just dev     # API server + UI with hot reload
+just check   # run before submitting: same checks as CI
 ```
 
 ## Guidelines
 
-- Run clippy and tests before submitting
+- Run `just check` before submitting
 - Keep changes focused
 - Open an issue first for significant changes
 

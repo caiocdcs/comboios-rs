@@ -13,6 +13,17 @@ Unofficial Rust client for Portuguese train data (CP / Infraestruturas de Portug
 
 ## Running
 
+The repo ships a Nix dev shell with Rust, bun, Node and [just](https://just.systems):
+
+```bash
+nix develop        # or: direnv allow (uses .envrc)
+just               # list tasks
+just dev           # API server on :3000 + UI on :5173
+just check         # everything CI runs
+```
+
+Or run the pieces by hand:
+
 **API server**
 ```bash
 cargo run -p comboios-server
@@ -146,7 +157,7 @@ port 8080 works too. Then open the URL on the phone:
 ## Development
 
 ```bash
-cargo build
-cargo test
-cargo clippy -- -W clippy::pedantic
+just check   # fmt, clippy -D warnings, tests, UI type-check and build (same as CI)
+just test    # Rust tests only
+just fmt
 ```

@@ -24,3 +24,7 @@
 
 # OS
 Thumbs.db
+
+# Nix / direnv
+.direnv/
+result
