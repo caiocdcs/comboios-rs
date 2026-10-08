@@ -1,29 +1,16 @@
-<div class="space-y-6">
-  <!-- stat cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    {#each [1, 2, 3] as _}
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 animate-pulse">
-        <div class="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
-        <div class="h-7 w-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
+<!-- Mirrors the station board (header row + train rows) so nothing jumps when data arrives -->
+<div class="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 motion-safe:animate-pulse" aria-busy="true" aria-label="Loading board">
+  <div class="flex items-center gap-3 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+    <div class="h-3 w-8 rounded bg-gray-200 dark:bg-gray-700"></div>
+  </div>
+  {#each [1, 2, 3, 4, 5, 6] as _}
+    <div class="flex items-center gap-3 px-4 py-3 border-b last:border-b-0 border-gray-200 dark:border-gray-700">
+      <div class="w-16 shrink-0"><div class="h-6 w-12 rounded bg-gray-200 dark:bg-gray-700"></div></div>
+      <div class="flex-1 space-y-2">
+        <div class="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700"></div>
+        <div class="h-3 w-1/3 rounded bg-gray-200 dark:bg-gray-700"></div>
       </div>
-    {/each}
-  </div>
-
-  <!-- train list card -->
-  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 animate-pulse">
-    <div class="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
-    <div class="space-y-4">
-      {#each [1, 2, 3, 4, 5] as _}
-        <div class="flex items-center gap-4 py-3 border-b border-gray-100 dark:border-gray-700/50">
-          <div class="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full flex-shrink-0"></div>
-          <div class="flex-1 space-y-2">
-            <div class="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div class="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          </div>
-          <div class="h-5 w-14 bg-gray-200 dark:bg-gray-700 rounded flex-shrink-0"></div>
-          <div class="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full flex-shrink-0"></div>
-        </div>
-      {/each}
+      <div class="w-16 shrink-0 flex justify-center"><div class="h-9 w-9 rounded-md bg-gray-200 dark:bg-gray-700"></div></div>
     </div>
-  </div>
+  {/each}
 </div>

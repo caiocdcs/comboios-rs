@@ -1,55 +1,36 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { dev } from '$app/environment';
+
+  $: notFound = $page.status === 404;
 </script>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-950 text-white px-4">
-  <div class="max-w-md text-center">
-    <div class="w-16 h-px bg-gradient-to-r from-transparent via-gray-500 to-transparent mx-auto mb-8 animate-pulse"></div>
-    
-    <h1 class="text-2xl font-light mb-2">
-      {$page.status === 404 ? 'Not Found' : 'Derailed'}
-    </h1>
-    
-    <p class="text-gray-400 mb-8">
-      {$page.status === 404 
-        ? 'The requested resource could not be found.' 
-        : 'Something went wrong. Please try again.'}
-    </p>
-    
-    <div class="flex gap-4 justify-center mb-8">
-      <button 
-        class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-        onclick={() => history.back()}
-      >
-        Go Back
-      </button>
-      <a 
-        href="/"
-        class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-      >
-        Home
-      </a>
-    </div>
-    
-    {#if dev && $page.error?.message}
-      <details class="text-left">
-        <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-400">
-          Debug
-        </summary>
-        <pre class="mt-2 p-4 bg-black/50 rounded-lg text-xs text-gray-300 overflow-auto max-h-48">{$page.error?.message}</pre>
-      </details>
-    {/if}
-  </div>
-</div>
+<svelte:head>
+  <title>{notFound ? 'Page not found' : 'Something went wrong'} · Comboios</title>
+</svelte:head>
 
-<style>
-  @keyframes pulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.8; }
-  }
-  
-  .animate-pulse {
-    animation: pulse 3s ease-in-out infinite;
-  }
-</style>
+<!-- Rendered inside the layout, so it follows the light/dark theme -->
+<div class="max-w-xl mx-auto py-12">
+  <h1 class="text-2xl font-extrabold tracking-tight mb-2">
+    {notFound ? "This page doesn't exist" : "This page couldn't load"}
+  </h1>
+  <p class="text-base text-gray-600 dark:text-gray-400 mb-6">
+    {notFound
+      ? 'The link may be old or mistyped. Find your station from the home screen.'
+      : 'The train data service may be busy or your connection dropped. Try again, or go back to your stations.'}
+  </p>
+
+  <div class="flex flex-wrap gap-3">
+    {#if !notFound}
+      <button type="button" class="btn btn-primary" on:click={() => location.reload()}>Try again</button>
+    {/if}
+    <a href="/" class="btn {notFound ? 'btn-primary' : 'btn-ghost'}">Go to stations</a>
+  </div>
+
+  {#if dev && $page.error?.message}
+    <details class="mt-8 text-sm">
+      <summary class="cursor-pointer text-gray-500 dark:text-gray-400">Error details</summary>
+      <pre class="mt-2 p-3 rounded-lg bg-gray-200 dark:bg-gray-800 text-xs overflow-auto max-h-48">{$page.error?.message}</pre>
+    </details>
+  {/if}
+</div>

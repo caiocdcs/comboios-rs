@@ -23,6 +23,13 @@
 - UI is now a client-only SPA (`ssr = false`), matching how nginx serves it; page loads in dev/preview no longer fail with relative API URLs.
 
 ### Changed
+- Design pass across every page and shared component:
+  - Overpass (self-hosted, SIL OFL) as the single typeface, with tabular figures for times instead of a monospace face; a 13/15/17/22/28 type scale.
+  - Delays are orange so they never read as the amber platform tile; text contrast re-checked (WCAG AA).
+  - Station board gets one column header (Time / To / Platform) instead of a label on every row; "7 min late" instead of "+7 min".
+  - Train page is titled "IC 512" with the route underneath and one status badge, replacing the five-field info grid and repeated delay badges; Share is an icon button.
+  - No all-caps labels, entrance animations or nested cards; one left-aligned column; visible keyboard focus; loading skeletons now mirror the real layouts.
+  - About page rewritten as plain, accurate help (using it, installing on a phone, data sources); error page follows the theme and says what to do next; page titles per station and train.
 - Home screen: search as you type (debounced; stale requests cancelled), with "Your stations", "Recent" (last 5 boards opened) and one-tap "Main stations" shortcuts instead of the hero banner and search-term history.
 - Train journey: one vertical stop list (rail line, next stop highlighted, expected vs timetabled times, platforms, earlier stops folded away) replaces the sideways-scrolling timeline and the duplicate "All stops" cards/table.
 - Header: one compact row (logo, About, theme toggle) instead of a hamburger menu for two links; respects the iPhone notch/home-bar safe areas when installed.

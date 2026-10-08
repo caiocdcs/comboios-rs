@@ -85,7 +85,7 @@
         <path d="M11.48 3.5a.56.56 0 011.04 0l2.13 5.11a.56.56 0 00.47.35l5.52.44c.5.04.7.66.32.99l-4.2 3.6a.56.56 0 00-.18.56l1.28 5.39a.56.56 0 01-.84.61l-4.72-2.89a.56.56 0 00-.59 0l-4.72 2.89a.56.56 0 01-.84-.61l1.28-5.39a.56.56 0 00-.18-.56l-4.2-3.6a.56.56 0 01.32-.99l5.52-.44a.56.56 0 00.47-.35l2.13-5.11z" />
       </svg>
     {/if}
-    <span class="flex-1 min-w-0 truncate font-medium text-gray-900 dark:text-white">{station.name}</span>
+    <span class="flex-1 min-w-0 truncate text-base font-semibold text-gray-900 dark:text-white">{station.name}</span>
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
     </svg>
@@ -94,7 +94,7 @@
 
 {#snippet stationList(title: string, stations: { id: string; name: string }[], starred: boolean)}
   <section class="mb-6">
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2 px-1">{title}</h2>
+    <h2 class="text-sm font-bold text-gray-600 dark:text-gray-300 mb-2 px-1">{title}</h2>
     <ul class="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
       {#each stations as station (station.id)}
         <li>{@render stationLink(station, starred)}</li>
@@ -103,7 +103,7 @@
   </section>
 {/snippet}
 
-<div class="max-w-3xl mx-auto">
+<div class="max-w-xl mx-auto">
   <!-- Search: results appear as you type -->
   <div class="relative mb-6">
     <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -148,7 +148,7 @@
 
     {#if $favorites.length === 0}
       <p class="text-sm text-center text-gray-500 dark:text-gray-400 px-4">
-        Tip: tap ☆ on a station's board to pin it to the top of this screen.
+        Tap the star on a station's board to keep it at the top of this screen.
       </p>
     {/if}
   {/if}

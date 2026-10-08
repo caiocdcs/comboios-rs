@@ -3,8 +3,8 @@
   import { getTrainJourney } from '$lib/api';
   import { formatCountdown, lisbonNowMinutes, minutesUntil } from '$lib/date';
   import { expectedStopTime, lastPassedIndex } from '$lib/journey';
+  import { parseService } from '$lib/service';
   import { liveRefresh } from '$lib/live';
-  import ServiceTypeBadge from '$lib/components/ServiceTypeBadge.svelte';
   import TrainSkeleton from '$lib/components/TrainSkeleton.svelte';
   import JourneyTimeline from '$lib/components/JourneyTimeline.svelte';
   import UpdatedAgo from '$lib/components/UpdatedAgo.svelte';
@@ -104,169 +104,112 @@
   $: finished = stops.length > 0 && nextStop === null;
 </script>
 
-<div class="max-w-3xl mx-auto">
-  <button
-    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors mb-4"
-    on:click={goBack}
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+<svelte:head>
+  <title>{train ? `${parseService(train.service_type).code} ${train.train_number}` : `Train ${data.trainNumber}`} · Comboios</title>
+</svelte:head>
+
+<div class="max-w-xl mx-auto">
+  <button type="button" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 dark:text-primary-300 mb-2" on:click={goBack}>
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
     </svg>
     Back
   </button>
 
   {#if error}
-    <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-      <div class="card-body items-center justify-center py-12 text-center">
-        <div class="text-error-600 dark:text-error-400 mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Failed to Load Train Details</h2>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-        <button class="btn btn-primary" on:click={retry}>
-          Try Again
-        </button>
-      </div>
+    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-8 text-center">
+      <p class="font-semibold text-gray-900 dark:text-white mb-1">Couldn't load train {data.trainNumber}</p>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">It may not run today, or the connection dropped. Try again.</p>
+      <button class="btn btn-primary" on:click={retry}>Try again</button>
     </div>
   {:else if !train}
     <TrainSkeleton />
   {:else}
-    <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mb-6">
-      <div class="card-body">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-          <div class="flex items-center gap-3">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-              #{train.train_number}
-            </h1>
-            <ServiceTypeBadge serviceType={train.service_type} />
-          </div>
-          <div class="flex items-center gap-2">
-          <button type="button" class="btn btn-ghost btn-sm gap-1" on:click={share}>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-            </svg>
-            {shareMessage || 'Share'}
-          </button>
-          {#if train.delay_minutes && train.delay_minutes > 0}
-            <div class="badge badge-warning gap-2 text-base px-4 py-3">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Delayed {train.delay_minutes} min</span>
-            </div>
-          {:else}
-            <div class="badge badge-success gap-2 text-base px-4 py-3">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              <span>On Time</span>
-            </div>
-          {/if}
-          </div>
+    {@const service = parseService(train.service_type)}
+    {@const late = train.delay_minutes && train.delay_minutes > 0 ? train.delay_minutes : 0}
+    <header class="mb-4">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <h1 class="text-2xl font-extrabold tracking-tight tabular-nums" title={service.name}>
+            {service.code} {train.train_number}
+          </h1>
+          <p class="text-base text-gray-700 dark:text-gray-300">
+            {train.origin} → {train.destination}
+          </p>
         </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-          <div>
-            <div class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Origin</div>
-            <div class="font-semibold text-gray-900 dark:text-white">{train.origin}</div>
-          </div>
-          <div>
-            <div class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Destination</div>
-            <div class="font-semibold text-gray-900 dark:text-white">{train.destination}</div>
-          </div>
-          <div>
-            <div class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Duration</div>
-            <div class="font-medium text-gray-700 dark:text-gray-300">
-              {#if train.duration}
-                {formatDuration(train.duration)}
-                {#if train.delay_minutes && train.delay_minutes > 0}
-                  <span class="text-warning-700 dark:text-warning-400">(+{train.delay_minutes} min)</span>
-                {/if}
-              {:else}
-                -
-              {/if}
-            </div>
-          </div>
-          <div>
-            <div class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Operator</div>
-            <div class="font-medium text-gray-700 dark:text-gray-300">{train.operator}</div>
-          </div>
-          <div>
-            <div class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Date</div>
-            <div class="font-medium text-gray-700 dark:text-gray-300">{train.date}</div>
-          </div>
-        </div>
+        <button
+          type="button"
+          class="btn btn-ghost btn-circle -mr-2 shrink-0 text-gray-600 dark:text-gray-300"
+          aria-label="Share this train"
+          title={shareMessage || 'Share'}
+          on:click={share}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+        </button>
       </div>
-    </div>
-
-    <!-- Where is the train now -->
-    <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mb-4">
-      <div class="card-body p-4 gap-3">
-        {#if finished && finalStop}
-          <div>
-            <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Arrived</div>
-            <div class="text-lg font-bold text-gray-900 dark:text-white">{finalStop.station_name}</div>
-          </div>
-        {:else if nextStop}
-          {@const nextExpected = expectedStopTime(nextStop)}
-          {@const nextIn = minutesUntil(nextExpected, nowMinutes)}
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                {notStarted ? `Departs ${nextStop.station_name}` : 'Next stop'}
-              </div>
-              {#if !notStarted}
-                <div class="text-lg font-bold text-gray-900 dark:text-white truncate">{nextStop.station_name}</div>
-              {/if}
-              <div class="font-mono text-gray-900 dark:text-white">
-                <span class="text-lg font-bold {(nextStop.delay_minutes ?? 0) > 0 ? 'text-warning-700 dark:text-warning-400' : ''}">{nextExpected}</span>
-                {#if nextExpected !== nextStop.scheduled_time}
-                  <span class="text-sm text-gray-500 dark:text-gray-400 line-through ml-1">{nextStop.scheduled_time}</span>
-                {/if}
-                {#if nextIn !== null && nextIn <= 120}
-                  <span class="text-sm font-sans font-medium text-gray-700 dark:text-gray-300 ml-2">{formatCountdown(nextIn)}</span>
-                {/if}
-              </div>
-            </div>
-            {#if nextStop.platform}
-              <div class="shrink-0 flex flex-col items-center">
-                <div class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Plat.</div>
-                <span class="platform-badge">{nextStop.platform}</span>
-              </div>
-            {/if}
-          </div>
-          {#if finalStop && finalStop !== nextStop}
-            {@const finalExpected = expectedStopTime(finalStop)}
-            <div class="text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
-              Arrives {finalStop.station_name} at
-              <span class="font-mono font-semibold text-gray-900 dark:text-white">{finalExpected}</span>
-              {#if finalExpected !== finalStop.scheduled_time}
-                <span class="font-mono line-through ml-1">{finalStop.scheduled_time}</span>
-              {/if}
-            </div>
-          {/if}
+      <div class="flex flex-wrap items-center gap-2 mt-2 text-sm">
+        {#if !finished}
+          <span class="badge {late ? 'badge-warning' : 'badge-success'} font-bold">
+            {late ? `${late} min late` : 'On time'}
+          </span>
         {/if}
+        {#if shareMessage}
+          <span class="text-gray-500 dark:text-gray-400" role="status">{shareMessage}</span>
+        {/if}
+        {#if train.duration}
+          <span class="text-gray-500 dark:text-gray-400">Journey takes {formatDuration(train.duration)}</span>
+        {/if}
+      </div>
+      {#if train.observations}
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{train.observations}</p>
+      {/if}
+    </header>
 
+    <!-- Where is the train now: the one card on this page -->
+    <section class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 mb-4" aria-label="Train position">
+      {#if finished && finalStop}
+        <p class="text-sm text-gray-500 dark:text-gray-400">Arrived at</p>
+        <p class="text-lg font-extrabold text-gray-900 dark:text-white">{finalStop.station_name}</p>
+      {:else if nextStop}
+        {@const nextExpected = expectedStopTime(nextStop)}
+        {@const nextIn = minutesUntil(nextExpected, nowMinutes)}
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-sm text-gray-500 dark:text-gray-400">{notStarted ? 'Leaves' : 'Next stop'}</p>
+            <p class="text-lg font-extrabold text-gray-900 dark:text-white truncate">{nextStop.station_name}</p>
+            <p class="tabular-nums">
+              <span class="text-lg font-extrabold {(nextStop.delay_minutes ?? 0) > 0 ? 'text-warning-700 dark:text-warning-400' : 'text-gray-900 dark:text-white'}">{nextExpected}</span>
+              {#if nextExpected !== nextStop.scheduled_time}
+                <span class="text-sm text-gray-500 dark:text-gray-400 line-through ml-1">{nextStop.scheduled_time}</span>
+              {/if}
+              {#if nextIn !== null && nextIn <= 120}
+                <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-2">{formatCountdown(nextIn)}</span>
+              {/if}
+            </p>
+          </div>
+          {#if nextStop.platform}
+            <span class="platform-badge shrink-0" aria-label="Platform {nextStop.platform}">{nextStop.platform}</span>
+          {/if}
+        </div>
+        {#if finalStop && finalStop !== nextStop}
+          {@const finalExpected = expectedStopTime(finalStop)}
+          <p class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400">
+            Arrives at {finalStop.station_name}
+            <span class="tabular-nums font-bold text-gray-900 dark:text-white ml-1">{finalExpected}</span>
+            {#if finalExpected !== finalStop.scheduled_time}
+              <span class="tabular-nums line-through ml-1">{finalStop.scheduled_time}</span>
+            {/if}
+          </p>
+        {/if}
+      {/if}
+
+      <div class="mt-3">
         <UpdatedAgo {lastUpdated} {refreshing} failed={refreshFailed} onRefresh={refresh} />
       </div>
-    </div>
+    </section>
 
-    <JourneyTimeline
-      stops={train.stops}
-    />
-
-    {#if train.observations}
-      <div class="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-        {train.observations}
-      </div>
-    {/if}
+    <JourneyTimeline stops={train.stops} />
   {/if}
 </div>
-
-<style>
-  .card {
-    transition: background-color 0.2s ease;
-  }
-</style>

@@ -23,7 +23,7 @@
     {#if refreshing}
       Updating…
     {:else if failed}
-      Couldn't update · data from {age}
+      Couldn't update. Showing data from {age}
     {:else if lastUpdated}
       Updated {age}
     {/if}

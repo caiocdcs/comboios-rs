@@ -91,7 +91,7 @@
         </div>
 
         <!-- Time: expected first, timetabled struck through when it changed -->
-        <div class="w-14 shrink-0 text-right font-mono leading-tight py-0.5">
+        <div class="w-14 shrink-0 text-right tabular-nums leading-tight py-0.5">
           <div class="{isPassed ? 'text-gray-500 dark:text-gray-400' : delay > 0
             ? 'font-bold text-warning-700 dark:text-warning-400'
             : 'font-semibold text-gray-900 dark:text-white'}">

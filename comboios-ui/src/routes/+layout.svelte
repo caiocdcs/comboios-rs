@@ -21,8 +21,8 @@
 <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
   <!-- pt-[env(...)]: clear the notch/status bar when installed as an app -->
   <header class="sticky top-0 z-40 bg-white/90 dark:bg-gray-800/90 backdrop-blur border-b border-gray-200 dark:border-gray-700 pt-[env(safe-area-inset-top)]">
-    <div class="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2 text-lg font-bold text-primary-700 dark:text-primary-300">
+    <div class="max-w-xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 text-lg font-extrabold tracking-tight text-gray-900 dark:text-white">
         <img src="/icon.svg" alt="" class="h-7 w-7 rounded-md" />
         Comboios
       </a>
@@ -54,14 +54,14 @@
   {/if}
 
   <main class="flex-grow py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-    <div class="max-w-3xl mx-auto px-4">
+    <div class="max-w-xl mx-auto px-4">
       <slot />
     </div>
   </main>
 
   <footer class="border-t border-gray-200 dark:border-gray-700 pb-[env(safe-area-inset-bottom)]">
-    <p class="max-w-3xl mx-auto px-4 py-4 text-center text-xs text-gray-500 dark:text-gray-400">
-      Unofficial app · data from CP and Infraestruturas de Portugal · {COMMIT_HASH}
+    <p class="max-w-xl mx-auto px-4 py-4 text-xs text-gray-500 dark:text-gray-400">
+      Unofficial. Times come from CP and Infraestruturas de Portugal. <span class="tabular-nums">{COMMIT_HASH}</span>
     </p>
   </footer>
 </div>

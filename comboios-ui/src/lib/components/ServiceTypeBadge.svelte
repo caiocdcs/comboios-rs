@@ -1,13 +1,13 @@
 <script lang="ts">
+  import { parseService } from '$lib/service';
+
   /** CP service as sent by the API, e.g. "IC|Intercidades", "AP|Alfa Pendular", "U|Urbano" */
   export let serviceType: string = '';
 
-  $: [rawCode, rawName] = serviceType.includes('|') ? serviceType.split('|', 2) : [serviceType, ''];
-  $: code = rawCode.trim() || '?';
-  $: name = rawName.trim() || code;
+  $: ({ code, name } = parseService(serviceType));
 
   // Long-distance services stand out; regional and urban stay quiet.
-  // Amber is reserved for platforms and delays.
+  // Amber is reserved for platforms.
   $: tone = ['AP', 'ALFA'].includes(code.toUpperCase())
     ? 'bg-primary-700 text-white dark:bg-primary-400 dark:text-gray-900'
     : ['IC', 'IN', 'INT'].includes(code.toUpperCase())
