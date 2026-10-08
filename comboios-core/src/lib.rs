@@ -29,7 +29,7 @@
 //!     }
 //!
 //!     // Get live departure board
-//!     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+//!     let today = comboios_core::lisbon_now().format("%Y-%m-%d").to_string();
 //!     let board = client.get_station_timetable("94-31039", &today, None).await?;
 //!
 //!     // Track a train
@@ -49,5 +49,14 @@ pub(crate) mod constants;
 
 pub use client::Comboios;
 pub use error::CoreError as Error;
+
+/// Current time in Portugal.
+///
+/// CP and IP schedules are Portugal-local, so "today" and "now" must not
+/// depend on the host timezone (Docker containers default to UTC).
+#[must_use]
+pub fn lisbon_now() -> chrono::DateTime<chrono_tz::Tz> {
+    chrono::Utc::now().with_timezone(&chrono_tz::Europe::Lisbon)
+}
 
 mod client;

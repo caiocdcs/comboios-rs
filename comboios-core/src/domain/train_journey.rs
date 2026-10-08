@@ -101,7 +101,7 @@ fn parse_delay_from_status(status: &str) -> Option<i32> {
 
 impl IpTrainJourneyResponse {
     pub fn to_train_journey(&self, train_number: &str) -> TrainJourney {
-        let now = chrono::Local::now();
+        let now = crate::lisbon_now();
         let current_time = now.format("%H:%M").to_string();
 
         let stops: Vec<JourneyStop> = self

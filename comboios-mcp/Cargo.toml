@@ -25,6 +25,5 @@ tracing-subscriber = { version = "0.3.19", features = [
 ] }
 axum = { version = "0.8", features = ["macros"] }
 reqwest = { version = "0.12", features = ["json"] }
-chrono = "0.4"
 uuid = { version = "1.6", features = ["v4", "serde"] }
 tokio-util = { version = "0.7", features = ["codec"] }

@@ -25,7 +25,12 @@
 
 <div class="join w-full">
   <input
-    type="text"
+    type="search"
+    enterkeyhint="search"
+    autocomplete="off"
+    autocapitalize="off"
+    spellcheck="false"
+    aria-label={placeholder}
     placeholder={placeholder}
     class="input input-bordered join-item flex-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
     bind:value

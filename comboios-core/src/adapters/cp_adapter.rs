@@ -45,20 +45,39 @@ impl CpAdapter {
     }
 
     pub async fn search_stations(&self, query: &str) -> Result<StationResponse> {
+        if query.trim().is_empty() {
+            return Err(CoreError::InvalidInput(
+                "station search query must not be empty".to_string(),
+            ));
+        }
+
         let url = format!("{}/services/travel-api/stations", self.base_url);
         let stations: Vec<CpStation> = self.get(&url).await?;
 
-        let query_lower = query.to_lowercase();
-        let matching: Vec<DomainStation> = stations
+        Ok(StationResponse {
+            response: Self::filter_stations(&stations, query),
+        })
+    }
+
+    /// Keep stations whose name contains every word of `query`.
+    ///
+    /// CP station names carry no diacritics ("Cais do Sodre", "Porto Campanha"),
+    /// so both sides are folded to lowercase ASCII before comparing: otherwise
+    /// "sodré" or "São Bento" typed on a Portuguese keyboard match nothing.
+    pub(crate) fn filter_stations(stations: &[CpStation], query: &str) -> Vec<DomainStation> {
+        let words: Vec<String> = query.split_whitespace().map(fold).collect();
+
+        stations
             .iter()
-            .filter(|s| s.designation.to_lowercase().contains(&query_lower))
+            .filter(|s| {
+                let name = fold(&s.designation);
+                words.iter().all(|w| name.contains(w.as_str()))
+            })
             .map(|s| DomainStation {
                 code: s.code.clone(),
                 designation: s.designation.clone(),
             })
-            .collect();
-
-        Ok(StationResponse { response: matching })
+            .collect()
     }
 
     pub async fn get_station_timetable(
@@ -171,12 +190,67 @@ impl CpAdapter {
     }
 }
 
+/// Lowercase and strip Portuguese diacritics, for accent-insensitive matching
+fn fold(s: &str) -> String {
+    s.chars()
+        .flat_map(char::to_lowercase)
+        .map(|c| match c {
+            'á' | 'à' | 'â' | 'ã' | 'ä' => 'a',
+            'é' | 'è' | 'ê' | 'ë' => 'e',
+            'í' | 'ì' | 'î' | 'ï' => 'i',
+            'ó' | 'ò' | 'ô' | 'õ' | 'ö' => 'o',
+            'ú' | 'ù' | 'û' | 'ü' => 'u',
+            'ç' => 'c',
+            c => c,
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use crate::adapters::cp_adapter::CpAdapter;
     use crate::domain::cp_types::{
-        CpServiceCode, CpStationSimple, CpStationStop, CpTimetableResponse,
+        CpServiceCode, CpStation, CpStationSimple, CpStationStop, CpTimetableResponse,
     };
+
+    fn cp_station(code: &str, designation: &str) -> CpStation {
+        CpStation {
+            code: code.to_string(),
+            designation: designation.to_string(),
+            latitude: None,
+            longitude: None,
+            region: None,
+            railways: None,
+        }
+    }
+
+    fn search(query: &str) -> Vec<String> {
+        let stations = [
+            cp_station("94-69005", "Cais do Sodre"),
+            cp_station("94-1008", "Porto Sao Bento"),
+            cp_station("94-2006", "Porto Campanha"),
+            cp_station("94-30007", "Lisboa Santa Apolonia"),
+        ];
+        CpAdapter::filter_stations(&stations, query)
+            .into_iter()
+            .map(|s| s.designation)
+            .collect()
+    }
+
+    #[test]
+    fn search_ignores_accents_and_case() {
+        assert_eq!(search("sodré"), ["Cais do Sodre"]);
+        assert_eq!(search("CAMPANHÃ"), ["Porto Campanha"]);
+        assert_eq!(search("Apolónia"), ["Lisboa Santa Apolonia"]);
+    }
+
+    #[test]
+    fn search_matches_every_word_in_any_order() {
+        assert_eq!(search("São Bento"), ["Porto Sao Bento"]);
+        assert_eq!(search("bento  porto"), ["Porto Sao Bento"]);
+        assert_eq!(search("porto"), ["Porto Sao Bento", "Porto Campanha"]);
+        assert!(search("porto sodre").is_empty());
+    }
 
     fn make_station(code: &str, designation: &str) -> CpStationSimple {
         CpStationSimple {

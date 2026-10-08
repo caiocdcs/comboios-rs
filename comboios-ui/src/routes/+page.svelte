@@ -88,9 +88,9 @@
   <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mb-8 slide-up">
     <div class="card-body p-6 md:p-8">
       <div class="form-control w-full">
-        <label class="label">
+        <div class="label">
           <span class="label-text text-lg font-medium text-gray-900 dark:text-white">Search for a station</span>
-        </label>
+        </div>
         <SearchInput 
           placeholder="Enter station name (e.g., Lisboa, Porto, Coimbra...)"
           bind:value={query}

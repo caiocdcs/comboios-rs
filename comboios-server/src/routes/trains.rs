@@ -10,7 +10,6 @@ use crate::{
     domain::{AppResponse, AppState, TrainId},
     error::AppError,
 };
-use chrono::Local;
 use comboios_core::domain::journey::TrainJourney;
 
 #[derive(Debug, Deserialize)]
@@ -48,7 +47,7 @@ pub async fn get_train_journey(
 
     let date = query
         .date
-        .unwrap_or_else(|| Local::now().format("%Y-%m-%d").to_string());
+        .unwrap_or_else(|| comboios_core::lisbon_now().format("%Y-%m-%d").to_string());
     let train = state.api.get_train_journey(&train_id, &date).await?;
 
     Ok(Json(AppResponse { data: train }))

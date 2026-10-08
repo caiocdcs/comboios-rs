@@ -1,4 +1,3 @@
-use chrono::Local;
 use comboios_core::{Comboios, domain::station_timetable::StationBoard};
 use rmcp::{
     Error as McpError, ServerHandler,
@@ -66,7 +65,7 @@ impl CpServer {
     }
 
     async fn fetch_station_timetable(&self, station_id: &str) -> Result<Vec<StationBoard>, String> {
-        let now = Local::now();
+        let now = comboios_core::lisbon_now();
         let date = now.format("%Y-%m-%d").to_string();
         let start_time = now.format("%H:%M").to_string();
 
@@ -84,7 +83,7 @@ impl CpServer {
         #[schemars(description = "Train number (e.g., 18298)")]
         train_id: String,
     ) -> Result<CallToolResult, McpError> {
-        let date = Local::now().format("%Y-%m-%d").to_string();
+        let date = comboios_core::lisbon_now().format("%Y-%m-%d").to_string();
         match self.api.get_train_journey(&train_id, &date).await {
             Ok(journey) => {
                 let message = serde_json::to_string(&journey)

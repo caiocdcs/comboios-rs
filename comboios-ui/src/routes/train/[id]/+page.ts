@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import { getTrainJourney } from '$lib/api';
+import { lisbonToday } from '$lib/date';
 import type { TrainDetails } from '$lib/types';
 
 export const load: PageLoad = async ({ params, url }) => {
@@ -15,10 +16,10 @@ export const load: PageLoad = async ({ params, url }) => {
     } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
       date = dateParam;
     } else {
-      date = new Date().toISOString().split('T')[0];
+      date = lisbonToday();
     }
   } else {
-    date = new Date().toISOString().split('T')[0];
+    date = lisbonToday();
   }
   
   try {

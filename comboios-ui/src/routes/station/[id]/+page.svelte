@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation';
   import { onMount, onDestroy } from 'svelte';
   import { getStationTimetable } from '$lib/api';
+  import { lisbonToday } from '$lib/date';
   import { ApiException } from '$lib/errors';
   import ServiceTypeBadge from '$lib/components/ServiceTypeBadge.svelte';
   import TrainStatusBadge from '$lib/components/TrainStatusBadge.svelte';
@@ -72,7 +73,7 @@
   }
 
   function viewTrainDetails(train: TrainEntry) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = lisbonToday();
     goto(`/train/${train.train_number}?date=${today}`);
   }
 
@@ -84,7 +85,7 @@
     const delayMinutes = train.delay;
     const isDelayed = delayMinutes && delayMinutes > 0;
     const isCancelled = train.observations && /supress|cancel/i.test(train.observations.toLowerCase());
-    const trainStatus = isCancelled ? 'cancelled' : train.has_passed ? 'departed' : isDelayed ? 'delayed' : 'on-time';
+    const trainStatus: 'cancelled' | 'departed' | 'delayed' | 'on-time' = isCancelled ? 'cancelled' : train.has_passed ? 'departed' : isDelayed ? 'delayed' : 'on-time';
     const movementLabel = train.is_departure ? 'Departing' : 'Arriving';
     return { arrivalTime, departureTime, displayTime, scheduledTime, delayMinutes, isDelayed, isCancelled, trainStatus, movementLabel };
   }
@@ -200,7 +201,7 @@
           <span>{error}</span>
         </div>
         <div class="mt-4 text-center">
-          <button class="btn btn-primary" on:click={loadTimetable}>
+          <button class="btn btn-primary" on:click={() => loadTimetable()}>
             Try Again
           </button>
         </div>
@@ -326,8 +327,9 @@
             <!-- Data Rows -->
             {#each paginatedTrains as train}
               {@const info = getTrainInfo(train)}
-              <div
-                class="grid grid-cols-5 gap-2 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors items-center"
+              <button
+                type="button"
+                class="grid grid-cols-5 gap-2 py-3 w-full text-left border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors items-center"
                 on:click={() => viewTrainDetails(train)}
               >
                 <div class="text-left">
@@ -356,7 +358,7 @@
                 <div class="text-left">
                   <TrainStatusBadge status={info.trainStatus} delayMinutes={info.delayMinutes} />
                 </div>
-              </div>
+              </button>
             {/each}
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { lisbonToday } from "./date";
 import type {
   StationResponse,
   StationBoardResponse,
@@ -67,7 +68,7 @@ function mapToTrainDetails(journey: any): TrainDetails {
         ? journey.destination
         : journey.destination.designation,
     operator: journey.operator,
-    date: new Date().toISOString().split("T")[0],
+    date: lisbonToday(),
     status: delayMinutes ? "delayed" : "scheduled",
     delay_minutes: delayMinutes,
     observations: journey.observations,
