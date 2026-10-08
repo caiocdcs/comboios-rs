@@ -6,12 +6,17 @@
 - Installable PWA: web manifest, app icons, iOS home-screen meta tags and a service worker that caches the app shell and the last station boards/journeys (network-first) for flaky connections, with an offline banner.
 - Favourite stations: star a station to pin it to the top of the home screen.
 - Vite dev/preview proxy for the API, so `bun run dev` works against a local server.
+- Nix flake dev shell (Rust, bun, Node 22, just) with `.envrc`, and a `justfile` (`dev`, `check`, `test`, `build`, `up`, ...); `just check` mirrors CI.
+- Station board: departures/arrivals tabs (departures by default), large platform badge, live time with the timetabled time struck through, countdown ("in 4 min"), "updated 40 s ago" with manual refresh, and refresh on returning to the app; shows the next ~2 hours with "Show later" instead of 10-per-page pagination.
+- Train journey: live "next stop" summary (expected time, countdown, platform) and expected arrival at the destination; auto-refreshes every 30 s while visible; Share button.
 
 ### Fixed
 - Station search is accent-insensitive and matches every word ("sodré", "São Bento", "Campanhã" found nothing because CP station names have no diacritics); blank queries are rejected.
 - Train journey dates (server, MCP) and journey stop status use `Europe/Lisbon` instead of the host timezone; the UI computes "today" in Lisbon instead of UTC.
 - Timetable "Try Again" button passed the click event as the `silent` flag, hiding the loading state and errors on retry.
 - Missing `favicon.png`; svelte-check errors and a11y warnings.
+- Station board sorted by time of day only, so trains after midnight appeared before late-evening ones; the departures/arrivals filter had no control and was never applied.
+- Journey page always labelled the last stop "Arrived", even before the train left.
 - UI is now a client-only SPA (`ssr = false`), matching how nginx serves it; page loads in dev/preview no longer fail with relative API URLs.
 
 ### Changed

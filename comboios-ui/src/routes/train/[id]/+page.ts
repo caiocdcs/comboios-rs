@@ -24,7 +24,7 @@ export const load: PageLoad = async ({ params, url }) => {
   
   try {
     const train = await getTrainJourney(trainNumber, date);
-    return { train };
+    return { train, trainNumber, date };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error';
     throw error(500, message);

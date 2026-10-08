@@ -1,13 +1,56 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { getTrainJourney } from '$lib/api';
+  import { addMinutes, formatCountdown, lisbonNowMinutes, minutesUntil } from '$lib/date';
+  import { liveRefresh } from '$lib/live';
   import ServiceTypeBadge from '$lib/components/ServiceTypeBadge.svelte';
   import TrainSkeleton from '$lib/components/TrainSkeleton.svelte';
   import JourneyTimeline from '$lib/components/JourneyTimeline.svelte';
-  import type { TrainDetails } from '$lib/types';
+  import UpdatedAgo from '$lib/components/UpdatedAgo.svelte';
+  import type { JourneyStop, TrainDetails } from '$lib/types';
 
-  export let data: { train?: TrainDetails; error?: string };
+  export let data: { train?: TrainDetails; error?: string; trainNumber: string; date: string };
 
-  $: train = data.train;
+  let train: TrainDetails | undefined;
+  let lastUpdated: Date | null = null;
+  let refreshing = false;
+  let refreshFailed = false;
+  let nowMinutes = lisbonNowMinutes();
+  let shareMessage = '';
+
+  // New train (first load or navigation): take the loader's data
+  $: {
+    train = data.train;
+    lastUpdated = new Date();
+    refreshFailed = false;
+  }
   $: error = data.error;
+
+  onMount(() => {
+    // A moving train changes faster than a station board
+    const stopRefresh = liveRefresh(refresh, () => lastUpdated, { intervalMs: 30_000 });
+    const clock = setInterval(() => (nowMinutes = lisbonNowMinutes()), 15_000);
+    return () => {
+      stopRefresh();
+      clearInterval(clock);
+    };
+  });
+
+  async function refresh() {
+    if (refreshing) return;
+    refreshing = true;
+    try {
+      train = await getTrainJourney(data.trainNumber, data.date);
+      lastUpdated = new Date();
+      refreshFailed = false;
+    } catch {
+      // Keep the last good journey on screen, flagged as stale
+      refreshFailed = true;
+    } finally {
+      refreshing = false;
+      nowMinutes = lisbonNowMinutes();
+    }
+  }
 
   function goBack() {
     window.history.back();
@@ -15,6 +58,24 @@
 
   function retry() {
     window.location.reload();
+  }
+
+  async function share() {
+    if (!train) return;
+    const delay = train.delay_minutes && train.delay_minutes > 0 ? ` (+${train.delay_minutes} min)` : '';
+    const text = `Train ${train.train_number} ${train.origin} → ${train.destination}${delay}`;
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Train ${train.train_number}`, text, url });
+      } else {
+        await navigator.clipboard.writeText(`${text}\n${url}`);
+        shareMessage = 'Link copied';
+        setTimeout(() => (shareMessage = ''), 2000);
+      }
+    } catch {
+      // Share sheet dismissed
+    }
   }
 
   function formatDuration(duration: string | undefined): string {
@@ -34,32 +95,22 @@
     return duration;
   }
 
-  function getCurrentTime(): string {
-    return new Date().toTimeString().slice(0, 5);
+  /** Best known time at a stop: predicted, else scheduled + delay */
+  function expectedTime(stop: JourneyStop): string {
+    if (stop.predicted_time) return stop.predicted_time;
+    const delay = stop.delay_minutes ?? 0;
+    return delay > 0 ? addMinutes(stop.scheduled_time, delay) : stop.scheduled_time;
   }
 
-  $: currentTime = getCurrentTime();
+  $: stops = train?.stops ?? [];
+  $: lastPassedIndex = stops.reduce((last, stop, i) => (stop.has_passed ? i : last), -1);
+  $: trainCurrentIndex = Math.max(lastPassedIndex, 0);
+  $: nextStop = stops.find((stop, i) => i > lastPassedIndex) ?? null;
+  $: finalStop = stops.length > 0 ? stops[stops.length - 1] : null;
+  $: notStarted = lastPassedIndex === -1;
+  $: finished = stops.length > 0 && nextStop === null;
 
-  $: trainCurrentIndex = (() => {
-    if (!train?.stops) return 0;
-
-    // Find the last stop that has_passed, which is the current position
-    // Use backend's has_passed field instead of time comparison
-    let lastPassedIdx = -1;
-    for (let i = 0; i < train.stops.length; i++) {
-      if (train.stops[i].has_passed) {
-        lastPassedIdx = i;
-      }
-    }
-
-    // If at least one stop has passed, current is the last passed one
-    if (lastPassedIdx !== -1) return lastPassedIdx;
-
-    // If no stops have passed, train is at origin (first stop)
-    return 0;
-  })();
-
-  function getStopStatus(stop: TrainDetails['stops'][0], index: number): 'passed' | 'current' | 'upcoming' {
+  function getStopStatus(_stop: JourneyStop, index: number): 'passed' | 'current' | 'upcoming' {
     if (index < trainCurrentIndex) return 'passed';
     if (index === trainCurrentIndex) return 'current';
     return 'upcoming';
@@ -104,6 +155,13 @@
             </h1>
             <ServiceTypeBadge serviceType={train.service_type} />
           </div>
+          <div class="flex items-center gap-2">
+          <button type="button" class="btn btn-ghost btn-sm gap-1" on:click={share}>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            {shareMessage || 'Share'}
+          </button>
           {#if train.delay_minutes && train.delay_minutes > 0}
             <div class="badge badge-warning gap-2 text-base px-4 py-3">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -119,6 +177,7 @@
               <span>On Time</span>
             </div>
           {/if}
+          </div>
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
@@ -155,6 +214,58 @@
       </div>
     </div>
 
+    <!-- Where is the train now -->
+    <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mb-4">
+      <div class="card-body p-4 gap-3">
+        {#if finished && finalStop}
+          <div>
+            <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Arrived</div>
+            <div class="text-lg font-bold text-gray-900 dark:text-white">{finalStop.station_name}</div>
+          </div>
+        {:else if nextStop}
+          {@const nextExpected = expectedTime(nextStop)}
+          {@const nextIn = minutesUntil(nextExpected, nowMinutes)}
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                {notStarted ? `Departs ${nextStop.station_name}` : 'Next stop'}
+              </div>
+              {#if !notStarted}
+                <div class="text-lg font-bold text-gray-900 dark:text-white truncate">{nextStop.station_name}</div>
+              {/if}
+              <div class="font-mono text-gray-900 dark:text-white">
+                <span class="text-lg font-bold {(nextStop.delay_minutes ?? 0) > 0 ? 'text-warning-600 dark:text-warning-400' : ''}">{nextExpected}</span>
+                {#if nextExpected !== nextStop.scheduled_time}
+                  <span class="text-sm text-gray-500 dark:text-gray-400 line-through ml-1">{nextStop.scheduled_time}</span>
+                {/if}
+                {#if nextIn !== null && nextIn <= 120}
+                  <span class="text-sm font-sans font-medium text-gray-700 dark:text-gray-300 ml-2">{formatCountdown(nextIn)}</span>
+                {/if}
+              </div>
+            </div>
+            {#if nextStop.platform}
+              <div class="shrink-0 text-center">
+                <div class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Plat.</div>
+                <div class="text-2xl font-bold font-mono text-primary-700 dark:text-primary-300">{nextStop.platform}</div>
+              </div>
+            {/if}
+          </div>
+          {#if finalStop && finalStop !== nextStop}
+            {@const finalExpected = expectedTime(finalStop)}
+            <div class="text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
+              Arrives {finalStop.station_name} at
+              <span class="font-mono font-semibold text-gray-900 dark:text-white">{finalExpected}</span>
+              {#if finalExpected !== finalStop.scheduled_time}
+                <span class="font-mono line-through ml-1">{finalStop.scheduled_time}</span>
+              {/if}
+            </div>
+          {/if}
+        {/if}
+
+        <UpdatedAgo {lastUpdated} {refreshing} failed={refreshFailed} onRefresh={refresh} />
+      </div>
+    </div>
+
     <JourneyTimeline
       stops={train.stops}
     />
@@ -186,7 +297,7 @@
                   {#if isFirst}
                     <span class="badge badge-info badge-sm">Origin</span>
                   {:else if isLast}
-                    <span class="badge badge-success badge-sm">Arrived</span>
+                    <span class="badge {stop.has_passed ? 'badge-success' : 'badge-outline'} badge-sm">{stop.has_passed ? 'Arrived' : 'Destination'}</span>
                   {:else if stopStatus === 'current'}
                     <span class="badge badge-primary badge-sm">Current</span>
                   {:else if stopStatus === 'passed'}
@@ -283,7 +394,7 @@
                     {#if isFirst}
                       <span class="badge badge-info badge-sm">Origin</span>
                     {:else if isLast}
-                      <span class="badge badge-success badge-sm">Arrived</span>
+                      <span class="badge {stop.has_passed ? 'badge-success' : 'badge-outline'} badge-sm">{stop.has_passed ? 'Arrived' : 'Destination'}</span>
                     {:else if stopStatus === 'current'}
                       <span class="badge badge-primary badge-sm">Current</span>
                     {:else if stopStatus === 'passed'}
