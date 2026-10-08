@@ -36,3 +36,34 @@ export function toggleFavorite(station: FavoriteStation) {
       : [...list, station]
   );
 }
+
+const RECENT_KEY = 'recentStations';
+const MAX_RECENT = 5;
+
+function loadRecent(): FavoriteStation[] {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const saved = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Stations opened most recently, newest first */
+export const recentStations = writable<FavoriteStation[]>(loadRecent());
+
+recentStations.subscribe((list) => {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+  } catch {
+    // Storage unavailable: recents just won't persist
+  }
+});
+
+export function addRecentStation(station: FavoriteStation) {
+  recentStations.update((list) =>
+    [station, ...list.filter((s) => s.id !== station.id)].slice(0, MAX_RECENT)
+  );
+}

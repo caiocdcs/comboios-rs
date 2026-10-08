@@ -1,13 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { getTrainJourney } from '$lib/api';
-  import { addMinutes, formatCountdown, lisbonNowMinutes, minutesUntil } from '$lib/date';
+  import { formatCountdown, lisbonNowMinutes, minutesUntil } from '$lib/date';
+  import { expectedStopTime, lastPassedIndex } from '$lib/journey';
   import { liveRefresh } from '$lib/live';
   import ServiceTypeBadge from '$lib/components/ServiceTypeBadge.svelte';
   import TrainSkeleton from '$lib/components/TrainSkeleton.svelte';
   import JourneyTimeline from '$lib/components/JourneyTimeline.svelte';
   import UpdatedAgo from '$lib/components/UpdatedAgo.svelte';
-  import type { JourneyStop, TrainDetails } from '$lib/types';
+  import type { TrainDetails } from '$lib/types';
 
   export let data: { train?: TrainDetails; error?: string; trainNumber: string; date: string };
 
@@ -95,29 +96,15 @@
     return duration;
   }
 
-  /** Best known time at a stop: predicted, else scheduled + delay */
-  function expectedTime(stop: JourneyStop): string {
-    if (stop.predicted_time) return stop.predicted_time;
-    const delay = stop.delay_minutes ?? 0;
-    return delay > 0 ? addMinutes(stop.scheduled_time, delay) : stop.scheduled_time;
-  }
-
   $: stops = train?.stops ?? [];
-  $: lastPassedIndex = stops.reduce((last, stop, i) => (stop.has_passed ? i : last), -1);
-  $: trainCurrentIndex = Math.max(lastPassedIndex, 0);
-  $: nextStop = stops.find((stop, i) => i > lastPassedIndex) ?? null;
+  $: passedIndex = lastPassedIndex(stops);
+  $: nextStop = stops.find((_stop, i) => i > passedIndex) ?? null;
   $: finalStop = stops.length > 0 ? stops[stops.length - 1] : null;
-  $: notStarted = lastPassedIndex === -1;
+  $: notStarted = passedIndex === -1;
   $: finished = stops.length > 0 && nextStop === null;
-
-  function getStopStatus(_stop: JourneyStop, index: number): 'passed' | 'current' | 'upcoming' {
-    if (index < trainCurrentIndex) return 'passed';
-    if (index === trainCurrentIndex) return 'current';
-    return 'upcoming';
-  }
 </script>
 
-<div class="max-w-6xl mx-auto">
+<div class="max-w-3xl mx-auto">
   <button
     class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors mb-4"
     on:click={goBack}
@@ -223,7 +210,7 @@
             <div class="text-lg font-bold text-gray-900 dark:text-white">{finalStop.station_name}</div>
           </div>
         {:else if nextStop}
-          {@const nextExpected = expectedTime(nextStop)}
+          {@const nextExpected = expectedStopTime(nextStop)}
           {@const nextIn = minutesUntil(nextExpected, nowMinutes)}
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
@@ -251,7 +238,7 @@
             {/if}
           </div>
           {#if finalStop && finalStop !== nextStop}
-            {@const finalExpected = expectedTime(finalStop)}
+            {@const finalExpected = expectedStopTime(finalStop)}
             <div class="text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
               Arrives {finalStop.station_name} at
               <span class="font-mono font-semibold text-gray-900 dark:text-white">{finalExpected}</span>
@@ -269,145 +256,6 @@
     <JourneyTimeline
       stops={train.stops}
     />
-
-    <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mt-6">
-      <div class="card-body">
-        <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-          All Stops
-        </h2>
-
-        <!-- Mobile Card View -->
-        <div class="lg:hidden space-y-3">
-          {#each train.stops as stop, i}
-            {@const delay = stop.delay_minutes}
-            {@const stopStatus = getStopStatus(stop, i)}
-            {@const isFirst = i === 0}
-            {@const isLast = i === train.stops.length - 1}
-
-            <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 {stopStatus === 'current' ? 'bg-primary-50 dark:bg-primary-900/20 border-l-4 border-l-primary-500' : 'bg-gray-50 dark:bg-gray-900/50'}">
-              <div class="flex items-start justify-between mb-2">
-                <div class="flex items-center gap-2">
-                  <span class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300">{i + 1}</span>
-                  <span class="font-semibold text-gray-900 dark:text-white">{stop.station_name}</span>
-                  {#if stopStatus === 'current'}
-                    <span class="w-2 h-2 bg-primary-500 rounded-full animate-ping"></span>
-                  {/if}
-                </div>
-                <div class="text-right">
-                  {#if isFirst}
-                    <span class="badge badge-info badge-sm">Origin</span>
-                  {:else if isLast}
-                    <span class="badge {stop.has_passed ? 'badge-success' : 'badge-outline'} badge-sm">{stop.has_passed ? 'Arrived' : 'Destination'}</span>
-                  {:else if stopStatus === 'current'}
-                    <span class="badge badge-primary badge-sm">Current</span>
-                  {:else if stopStatus === 'passed'}
-                    <span class="badge badge-ghost badge-sm">Passed</span>
-                  {:else}
-                    <span class="badge badge-outline badge-sm">Upcoming</span>
-                  {/if}
-                </div>
-              </div>
-
-              <div class="flex flex-wrap gap-3 text-sm">
-                <div class="flex items-center gap-1">
-                  <span class="text-gray-500 dark:text-gray-400">Time:</span>
-                  <span class="font-mono font-medium text-gray-900 dark:text-gray-100">{stop.scheduled_time}</span>
-                  {#if stop.predicted_time}
-                    <span class="text-warning-700 dark:text-warning-400">→ {stop.predicted_time}</span>
-                  {/if}
-                </div>
-                {#if stop.platform}
-                  <div class="flex items-center gap-1">
-                    <span class="text-gray-500 dark:text-gray-400">Plat:</span>
-                    <span class="platform-badge-sm">{stop.platform}</span>
-                  </div>
-                {/if}
-                {#if delay && delay > 0}
-                  <div class="flex items-center gap-1">
-                    <span class="text-error-600 dark:text-error-400 font-medium">+{delay} min</span>
-                  </div>
-                {:else if stopStatus !== 'upcoming'}
-                  <span class="text-success-700 dark:text-success-400 text-xs">On time</span>
-                {/if}
-              </div>
-            </div>
-          {/each}
-        </div>
-
-        <!-- Desktop Table View -->
-        <div class="hidden lg:block overflow-x-auto">
-          <table class="table w-full text-sm">
-            <thead>
-              <tr class="border-b border-gray-300 dark:border-gray-600">
-                <th class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-semibold w-8">#</th>
-                <th class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-semibold text-left">Station</th>
-                <th class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-semibold text-center w-20">Platform</th>
-                <th class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-semibold text-center w-24">Scheduled</th>
-                <th class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-semibold text-center w-24">Predicted</th>
-                <th class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-semibold text-center w-20">Delay</th>
-                <th class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-semibold text-center w-24">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each train.stops as stop, i}
-                {@const delay = stop.delay_minutes}
-                {@const stopStatus = getStopStatus(stop, i)}
-                {@const isFirst = i === 0}
-                {@const isLast = i === train.stops.length - 1}
-
-                <tr class="border-b border-gray-200 dark:border-gray-700 {stopStatus === 'current' ? 'bg-primary-50 dark:bg-primary-900/20' : ''}">
-                  <td class="py-3 px-2 text-gray-600 dark:text-gray-400 text-center">
-                    {#if stopStatus === 'current'}
-                      <span class="inline-block w-2 h-2 bg-primary-500 rounded-full animate-pulse"></span>
-                    {:else}
-                      {i + 1}
-                    {/if}
-                  </td>
-                  <td class="py-3 px-2 font-medium text-gray-900 dark:text-gray-100">{stop.station_name}</td>
-                  <td class="py-3 px-2 text-center">
-                    {#if stop.platform}
-                      <span class="platform-badge">{stop.platform}</span>
-                    {:else}
-                      <span class="text-gray-500 dark:text-gray-400">-</span>
-                    {/if}
-                  </td>
-                  <td class="py-3 px-2 text-center font-mono text-gray-900 dark:text-gray-100">{stop.scheduled_time}</td>
-                  <td class="py-3 px-2 text-center">
-                    {#if stop.predicted_time}
-                      <span class="font-mono text-warning-700 dark:text-warning-400 font-semibold">{stop.predicted_time}</span>
-                    {:else}
-                      <span class="text-gray-500 dark:text-gray-400">-</span>
-                    {/if}
-                  </td>
-                  <td class="py-3 px-2 text-center">
-                    {#if delay && delay > 0}
-                      <span class="badge badge-warning badge-sm">+{delay} min</span>
-                    {:else if stopStatus !== 'upcoming'}
-                      <span class="badge badge-success badge-sm">On time</span>
-                    {:else}
-                      <span class="text-gray-500 dark:text-gray-400">-</span>
-                    {/if}
-                  </td>
-                  <td class="py-3 px-2 text-center">
-                    {#if isFirst}
-                      <span class="badge badge-info badge-sm">Origin</span>
-                    {:else if isLast}
-                      <span class="badge {stop.has_passed ? 'badge-success' : 'badge-outline'} badge-sm">{stop.has_passed ? 'Arrived' : 'Destination'}</span>
-                    {:else if stopStatus === 'current'}
-                      <span class="badge badge-primary badge-sm">Current</span>
-                    {:else if stopStatus === 'passed'}
-                      <span class="badge badge-ghost badge-sm">Passed</span>
-                    {:else}
-                      <span class="badge badge-outline badge-sm">Upcoming</span>
-                    {/if}
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
 
     {#if train.observations}
       <div class="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">

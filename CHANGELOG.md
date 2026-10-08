@@ -23,6 +23,10 @@
 - UI is now a client-only SPA (`ssr = false`), matching how nginx serves it; page loads in dev/preview no longer fail with relative API URLs.
 
 ### Changed
+- Home screen: search as you type (debounced; stale requests cancelled), with "Your stations", "Recent" (last 5 boards opened) and one-tap "Main stations" shortcuts instead of the hero banner and search-term history.
+- Train journey: one vertical stop list (rail line, next stop highlighted, expected vs timetabled times, platforms, earlier stops folded away) replaces the sideways-scrolling timeline and the duplicate "All stops" cards/table.
+- Header: one compact row (logo, About, theme toggle) instead of a hamburger menu for two links; respects the iPhone notch/home-bar safe areas when installed.
+- Removed unused components (AlertBanner, LoadingSpinner, Pagination, SearchInput, StationCard, TrainStatusBadge) and unused type exports.
 - New "Night blue" colour scheme for light and dark mode: navy-tinted neutrals (dark mode is navy, not grey), indigo brand, amber platform badges, and green/amber/red for on time/delayed/cancelled. Text colours checked against WCAG AA (4.5:1). App icon and status-bar colours updated to match.
 - Service badges show the short CP code (AP, IC, IR, R, U) with the full name as a tooltip, instead of the raw "IC|Intercidades" value.
 - System fonts instead of Google Fonts (faster first load, works offline, no third-party request).

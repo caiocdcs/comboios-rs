@@ -7,8 +7,13 @@ import type {
 } from "./types";
 import { handleApiResponse } from "./errors";
 
-export async function searchStations(query: string): Promise<StationResponse> {
-  const response = await fetch(`/stations?query=${encodeURIComponent(query)}`);
+export async function searchStations(
+  query: string,
+  signal?: AbortSignal,
+): Promise<StationResponse> {
+  const response = await fetch(`/stations?query=${encodeURIComponent(query)}`, {
+    signal,
+  });
   const rawData = await handleApiResponse<{ data: BackendStation[] }>(response);
 
   const mappedData = rawData.data.map((station: BackendStation) => ({
