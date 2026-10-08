@@ -4,6 +4,7 @@
   import SearchInput from '$lib/components/SearchInput.svelte';
   import StationCard from '$lib/components/StationCard.svelte';
   import type { Station } from '$lib/types';
+  import { favorites } from '$lib/favorites';
 
   let query = '';
   let stations: Station[] = [];
@@ -71,18 +72,40 @@
 </script>
 
 <div class="max-w-4xl mx-auto">
-  <!-- Hero Section -->
-  <div class="text-center mb-12 fade-in">
-    <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-100 dark:bg-primary-900/20 rounded-full mb-6">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-      </svg>
+  <!-- Hero Section: hidden once favourites exist, so they come first on a phone -->
+  {#if $favorites.length === 0}
+    <div class="text-center mb-12 fade-in">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-100 dark:bg-primary-900/20 rounded-full mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+        </svg>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">Comboios de Portugal</h1>
+      <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+        Find train schedules, station information, and real-time updates for all CP services across Portugal.
+      </p>
     </div>
-    <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">Comboios de Portugal</h1>
-    <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-      Find train schedules, station information, and real-time updates for all CP services across Portugal.
-    </p>
-  </div>
+  {/if}
+
+  <!-- Favourite Stations: one tap to the board -->
+  {#if $favorites.length > 0}
+    <div class="mb-6 fade-in">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">Your stations</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {#each $favorites as fav (fav.id)}
+          <a
+            href="/station/{fav.id}"
+            class="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-500 transition-colors"
+          >
+            <span class="font-semibold text-lg text-gray-900 dark:text-white truncate">{fav.name}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        {/each}
+      </div>
+    </div>
+  {/if}
 
   <!-- Search Section -->
   <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mb-8 slide-up">

@@ -122,6 +122,27 @@ Override with environment variables:
 
 The UI uses nginx to proxy API requests (`/stations`, `/trains`, `/ping`, `/diagnostics`, `/refresh`) to the backend. This means the frontend always talks to its own origin -- no build-time API URL needed. Set `API_PROXY_PASS` to change the backend target.
 
+## Install on your phone
+
+The UI is an installable web app (PWA): favourite stations are pinned to the
+home screen, and the app shell plus the last boards you loaded keep working
+on a flaky connection.
+
+Browsers only enable this over **HTTPS** (service workers and the Android
+install prompt need a secure origin), so plain `http://192.168.x.x:8080` won't
+do. On a homelab the easiest option is Tailscale:
+
+```bash
+docker compose up -d
+tailscale serve --bg 8080   # https://<machine>.<tailnet>.ts.net
+```
+
+Any reverse proxy with a TLS certificate (Caddy, Traefik, nginx) in front of
+port 8080 works too. Then open the URL on the phone:
+
+- **iOS (Safari):** Share → Add to Home Screen
+- **Android (Chrome):** menu → Install app
+
 ## Development
 
 ```bash

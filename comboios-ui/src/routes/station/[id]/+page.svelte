@@ -4,6 +4,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { getStationTimetable } from '$lib/api';
   import { lisbonToday } from '$lib/date';
+  import { favorites, toggleFavorite } from '$lib/favorites';
   import { ApiException } from '$lib/errors';
   import ServiceTypeBadge from '$lib/components/ServiceTypeBadge.svelte';
   import TrainStatusBadge from '$lib/components/TrainStatusBadge.svelte';
@@ -109,6 +110,7 @@
   );
   $: totalTrains = sortedTrains.length;
   $: stationName = data.stationName || 'Station';
+  $: isFavorite = $favorites.some((f) => f.id === stationId);
 
   // Reset to page 1 when filters change
   $: {
@@ -141,9 +143,22 @@
     </button>
 
     <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{stationName}</h1>
-        <p class="text-gray-600 dark:text-gray-400">Real-time train information</p>
+      <div class="flex items-start gap-3">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{stationName}</h1>
+          <p class="text-gray-600 dark:text-gray-400">Real-time train information</p>
+        </div>
+        <button
+          type="button"
+          class="btn btn-ghost btn-circle shrink-0 {isFavorite ? 'text-yellow-500' : 'text-gray-400'}"
+          aria-label={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
+          aria-pressed={isFavorite}
+          on:click={() => toggleFavorite({ id: stationId, name: stationName })}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill={isFavorite ? 'currentColor' : 'none'}>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.5a.56.56 0 011.04 0l2.13 5.11a.56.56 0 00.47.35l5.52.44c.5.04.7.66.32.99l-4.2 3.6a.56.56 0 00-.18.56l1.28 5.39a.56.56 0 01-.84.61l-4.72-2.89a.56.56 0 00-.59 0l-4.72 2.89a.56.56 0 01-.84-.61l1.28-5.39a.56.56 0 00-.18-.56l-4.2-3.6a.56.56 0 01.32-.99l5.52-.44a.56.56 0 00.47-.35l2.13-5.11z" />
+          </svg>
+        </button>
       </div>
       <div class="mt-4 md:mt-0">
         <div class="badge badge-primary badge-lg">

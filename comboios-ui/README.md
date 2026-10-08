@@ -27,7 +27,7 @@ This is a modern, lightweight web application built with SvelteKit and TypeScrip
 ### Prerequisites
 
 - Bun 1.0+ (or Node.js 18+)
-- Backend server running on localhost:3000
+- Backend server running on localhost:3000 (`cargo run -p comboios-server`)
 
 ### Development
 
@@ -35,6 +35,10 @@ This is a modern, lightweight web application built with SvelteKit and TypeScrip
 bun install
 bun run dev    # http://localhost:5173
 ```
+
+The UI calls the API with relative URLs (`/stations`, `/trains`, ...). In
+production nginx proxies them to the server; in `bun run dev` and
+`bun run preview` Vite does the same.
 
 ### Production Build
 
@@ -44,14 +48,14 @@ bun run build  # Outputs to build/
 
 ### Deployment
 
-```bash
-bun run build
-rsync -avz build/ your-server:/var/www/comboios/
-```
+Use the `Dockerfile` (nginx serving `build/` and proxying the API), e.g. via
+the root `docker-compose.yml`. Serve it over HTTPS so the service worker and
+install prompt work; see "Install on your phone" in the root README.
 
 ## Environment Variables
 
-- `VITE_API_URL` - Backend API URL (default: http://localhost:3000)
+- `API_URL` - API server that `bun run dev` / `bun run preview` proxy to (default: http://localhost:3000)
+- `API_PROXY_PASS` - API server that the nginx image proxies to (Docker runtime)
 
 ## Project Structure
 

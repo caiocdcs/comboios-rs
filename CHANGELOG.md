@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Added
+- Installable PWA: web manifest, app icons, iOS home-screen meta tags and a service worker that caches the app shell and the last station boards/journeys (network-first) for flaky connections, with an offline banner.
+- Favourite stations: star a station to pin it to the top of the home screen.
+- Vite dev/preview proxy for the API, so `bun run dev` works against a local server.
+
+### Fixed
+- Station search is accent-insensitive and matches every word ("sodré", "São Bento", "Campanhã" found nothing because CP station names have no diacritics); blank queries are rejected.
+- Train journey dates (server, MCP) and journey stop status use `Europe/Lisbon` instead of the host timezone; the UI computes "today" in Lisbon instead of UTC.
+- Timetable "Try Again" button passed the click event as the `silent` flag, hiding the loading state and errors on retry.
+- Missing `favicon.png`; svelte-check errors and a11y warnings.
+- UI is now a client-only SPA (`ssr = false`), matching how nginx serves it; page loads in dev/preview no longer fail with relative API URLs.
+
+### Changed
+- nginx: `service-worker.js`, the manifest and HTML are revalidated on each load; hashed `/_app/immutable` assets are cached for a year.
+- Search input tuned for mobile keyboards (search key, no autocorrect/capitalisation).
+
 ## [0.3.0] - 2026-08-17
 
 ### Fixed

@@ -31,7 +31,23 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
     }
 
+    # The service worker and manifest must be revalidated so updates reach installed apps
+    location = /service-worker.js {
+        add_header Cache-Control "no-cache";
+    }
+
+    location = /manifest.webmanifest {
+        types { application/manifest+json webmanifest; }
+        add_header Cache-Control "no-cache";
+    }
+
+    # Content-hashed build output can be cached forever
+    location /_app/immutable/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
     location / {
+        add_header Cache-Control "no-cache";
         try_files $uri $uri/ /index.html;
     }
 }

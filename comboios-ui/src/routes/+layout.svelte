@@ -4,8 +4,21 @@
   import { page } from '$app/stores';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+  import { onMount } from 'svelte';
 
   let menuOpen = false;
+  let offline = false;
+
+  onMount(() => {
+    const update = () => (offline = !navigator.onLine);
+    update();
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  });
   let isNavigating = false;
 
   beforeNavigate(() => {
@@ -111,6 +124,12 @@
       </div>
     {/if}
   </header>
+
+  {#if offline}
+    <div class="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-900 dark:text-yellow-100 text-sm text-center px-4 py-2" role="status">
+      You're offline. Times shown are from your last connection and may be out of date.
+    </div>
+  {/if}
 
   {#if isNavigating}
     <div class="h-1 bg-primary-600 dark:bg-primary-400 animate-pulse"></div>
