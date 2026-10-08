@@ -1,87 +1,147 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * "Night blue" theme.
+ *
+ * Tailwind's `gray`/`primary`/status palettes (tailwind.config.js) carry the
+ * colours; these daisyUI variables make its components (btn, badge, alert,
+ * loading, ...) use the same palette. The theme is chosen by `data-theme` on
+ * <html>, kept in sync with the `dark` class (app.html, ThemeToggle).
+ */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f5f7fb;
+  --color-base-300: #dde2ec;
+  --color-base-content: #0a1020;
+  --color-primary: #3730a3;
+  --color-primary-content: #ffffff;
+  --color-secondary: #4b5468;
+  --color-secondary-content: #ffffff;
+  --color-accent: #f59e0b;
+  --color-accent-content: #0a1020;
+  --color-neutral: #1e2942;
+  --color-neutral-content: #eceff6;
+  --color-info: #4338ca;
+  --color-info-content: #ffffff;
+  --color-success: #047857;
+  --color-success-content: #ffffff;
+  --color-warning: #b45309;
+  --color-warning-content: #ffffff;
+  --color-error: #b91c1c;
+  --color-error-content: #ffffff;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-base-100: #121a2e;
+  --color-base-200: #0a1020;
+  --color-base-300: #1e2942;
+  --color-base-content: #e5eaf5;
+  --color-primary: #818cf8;
+  --color-primary-content: #0a1020;
+  --color-secondary: #8e98ad;
+  --color-secondary-content: #0a1020;
+  --color-accent: #f59e0b;
+  --color-accent-content: #0a1020;
+  --color-neutral: #1e2942;
+  --color-neutral-content: #e5eaf5;
+  --color-info: #a5b4fc;
+  --color-info-content: #0a1020;
+  --color-success: #34d399;
+  --color-success-content: #0a1020;
+  --color-warning: #fbbf24;
+  --color-warning-content: #0a1020;
+  --color-error: #f87171;
+  --color-error-content: #0a1020;
+}
+
 @layer base {
   body {
-    @apply font-sans text-gray-800 bg-gray-50;
+    @apply font-sans text-gray-800 bg-gray-100 dark:text-gray-100 dark:bg-gray-900;
+    -webkit-tap-highlight-color: transparent;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-bold text-gray-900;
+    @apply font-heading font-bold text-gray-900 dark:text-white;
   }
-  
-  .container {
-    @apply max-w-7xl;
+
+  /* Times line up in columns */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-all duration-200 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply bg-primary-700 hover:bg-primary-800 text-white border-transparent font-medium rounded-lg transition-colors duration-200
+      dark:bg-primary-400 dark:hover:bg-primary-300 dark:text-gray-900;
   }
-  
-  .btn-secondary {
-    @apply bg-secondary-600 hover:bg-secondary-700 text-white font-medium rounded-lg transition-all duration-200 focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2;
-  }
-  
-  .btn-accent {
-    @apply bg-accent-600 hover:bg-accent-700 text-white font-medium rounded-lg transition-all duration-200 focus:ring-2 focus:ring-accent-500 focus:ring-offset-2;
-  }
-  
-  .btn-outline {
-    @apply border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white font-medium rounded-lg transition-all duration-200 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
-  }
-  
+
   .card {
-    @apply bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl;
+    @apply rounded-2xl shadow-sm overflow-hidden;
   }
-  
-  .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all;
-  }
-  
-  .badge-status {
-    @apply px-2.5 py-0.5 rounded-full text-xs font-medium;
-  }
-  
+
+  /* Status badges, readable in both themes */
   .badge-success {
-    @apply bg-green-100 text-green-800;
+    @apply border-transparent bg-success-100 text-success-800 dark:bg-success-900/50 dark:text-success-300;
   }
-  
+
   .badge-warning {
-    @apply bg-yellow-100 text-yellow-800;
+    @apply border-transparent bg-warning-100 text-warning-800 dark:bg-warning-900/50 dark:text-warning-300;
   }
-  
+
   .badge-error {
-    @apply bg-red-100 text-red-800;
+    @apply border-transparent bg-error-100 text-error-800 dark:bg-error-900/50 dark:text-error-300;
   }
-  
+
   .badge-info {
-    @apply bg-blue-100 text-blue-800;
+    @apply border-transparent bg-primary-100 text-primary-800 dark:bg-primary-900/60 dark:text-primary-200;
   }
-  
+
+  /* Platform number: amber with navy text, like a station departures board */
+  .platform-badge {
+    @apply inline-flex items-center justify-center min-w-[2.25rem] h-9 px-1.5 rounded-lg bg-platform text-platform-ink font-mono font-bold text-lg;
+  }
+
+  .platform-badge-sm {
+    @apply inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1 rounded-md bg-platform text-platform-ink font-mono font-bold text-xs;
+  }
+
   .fade-in {
     animation: fade-in 0.3s ease-in-out;
   }
-  
+
   .slide-up {
     animation: slide-up 0.3s ease-out;
   }
 }
 
-@layer utilities {
-  .text-shadow {
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+@keyframes fade-in {
+  from {
+    opacity: 0;
   }
-  
-  .text-shadow-md {
-    text-shadow: 0 4px 8px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+  to {
+    opacity: 1;
   }
-  
-  .transform-transition {
-    transition: transform 0.2s ease-in-out;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .slide-up {
+    animation: none;
   }
 }

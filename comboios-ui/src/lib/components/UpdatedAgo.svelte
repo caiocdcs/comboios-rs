@@ -19,7 +19,7 @@
 </script>
 
 <div class="flex items-center justify-between gap-3 text-sm" aria-live="polite">
-  <span class={failed ? 'text-warning-600 dark:text-warning-400' : 'text-gray-500 dark:text-gray-400'}>
+  <span class={failed ? 'text-warning-700 dark:text-warning-400' : 'text-gray-500 dark:text-gray-400'}>
     {#if refreshing}
       Updating…
     {:else if failed}

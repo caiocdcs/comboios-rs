@@ -17,9 +17,15 @@
 - Missing `favicon.png`; svelte-check errors and a11y warnings.
 - Station board sorted by time of day only, so trains after midnight appeared before late-evening ones; the departures/arrivals filter had no control and was never applied.
 - Journey page always labelled the last stop "Arrived", even before the train left.
+- Dark mode was split in two: the toggle switched Tailwind's `dark` class while daisyUI components (buttons, badges, tabs) followed the OS setting, so they could disagree. Both now follow the same choice (`data-theme` kept in sync).
+- "On time" and "journey completed" indicators had no colour (`success-*` palette was never defined); light-only badge and heading styles in `app.css` were unreadable in dark mode.
+- Service badge colour matching never matched CP's values ("Intercidades"), and regional trains used the same amber as platforms.
 - UI is now a client-only SPA (`ssr = false`), matching how nginx serves it; page loads in dev/preview no longer fail with relative API URLs.
 
 ### Changed
+- New "Night blue" colour scheme for light and dark mode: navy-tinted neutrals (dark mode is navy, not grey), indigo brand, amber platform badges, and green/amber/red for on time/delayed/cancelled. Text colours checked against WCAG AA (4.5:1). App icon and status-bar colours updated to match.
+- Service badges show the short CP code (AP, IC, IR, R, U) with the full name as a tooltip, instead of the raw "IC|Intercidades" value.
+- System fonts instead of Google Fonts (faster first load, works offline, no third-party request).
 - nginx: `service-worker.js`, the manifest and HTML are revalidated on each load; hashed `/_app/immutable` assets are cached for a year.
 - Search input tuned for mobile keyboards (search key, no autocorrect/capitalisation).
 

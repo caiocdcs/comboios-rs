@@ -140,7 +140,7 @@
       <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{stationName}</h1>
       <button
         type="button"
-        class="btn btn-ghost btn-circle shrink-0 {isFavorite ? 'text-yellow-500' : 'text-gray-400'}"
+        class="btn btn-ghost btn-circle shrink-0 {isFavorite ? 'text-platform' : 'text-gray-400 dark:text-gray-400'}"
         aria-label={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
         aria-pressed={isFavorite}
         on:click={() => toggleFavorite({ id: data.stationId, name: stationName })}
@@ -200,7 +200,7 @@
     </div>
   {:else}
     <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-      {rows.length} {mode}{#if delayedCount > 0} · <span class="text-warning-600 dark:text-warning-400 font-medium">{delayedCount} delayed</span>{/if}
+      {rows.length} {mode}{#if delayedCount > 0} · <span class="text-warning-700 dark:text-warning-400 font-medium">{delayedCount} delayed</span>{/if}
     </p>
 
     <ul class="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -215,9 +215,9 @@
             <!-- Time: live time first, timetabled time struck through when it changed -->
             <div class="w-16 shrink-0 font-mono leading-tight">
               <div class="text-lg font-bold {row.cancelled
-                ? 'line-through text-error'
+                ? 'line-through text-error-600 dark:text-error-400'
                 : row.delay > 0
-                  ? 'text-warning-600 dark:text-warning-400'
+                  ? 'text-warning-700 dark:text-warning-400'
                   : 'text-gray-900 dark:text-white'}">
                 {row.expected}
               </div>
@@ -235,12 +235,12 @@
                 <ServiceTypeBadge serviceType={t.service_type} />
                 <span>{t.train_number}</span>
                 {#if row.cancelled}
-                  <span class="text-error font-semibold">Cancelled</span>
+                  <span class="text-error-600 dark:text-error-400 font-semibold">Cancelled</span>
                 {:else if row.passed}
                   <span>{mode === 'departures' ? 'Departed' : 'Arrived'}</span>
                 {:else}
                   {#if row.delay > 0}
-                    <span class="text-warning-600 dark:text-warning-400 font-semibold">+{row.delay} min</span>
+                    <span class="text-warning-700 dark:text-warning-400 font-semibold">+{row.delay} min</span>
                   {/if}
                   {#if row.until <= 60}
                     <span class="font-medium text-gray-700 dark:text-gray-300">{formatCountdown(row.until)}</span>
@@ -248,16 +248,18 @@
                 {/if}
               </div>
               {#if t.observations && !row.cancelled}
-                <div class="text-xs text-error mt-0.5 truncate">{t.observations}</div>
+                <div class="text-xs text-error-600 dark:text-error-400 mt-0.5 truncate">{t.observations}</div>
               {/if}
             </div>
 
             <!-- Platform: the thing you need on the concourse -->
-            <div class="shrink-0 text-center w-12">
-              <div class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Plat.</div>
-              <div class="text-xl font-bold font-mono {t.platform ? 'text-primary-700 dark:text-primary-300' : 'text-gray-400'}">
-                {t.platform || '–'}
-              </div>
+            <div class="shrink-0 flex flex-col items-center w-12">
+              <div class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Plat.</div>
+              {#if t.platform}
+                <span class="platform-badge">{t.platform}</span>
+              {:else}
+                <span class="text-lg font-mono text-gray-400 dark:text-gray-400 h-9 leading-9">–</span>
+              {/if}
             </div>
           </button>
         </li>

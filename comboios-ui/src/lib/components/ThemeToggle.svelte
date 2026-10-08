@@ -1,18 +1,21 @@
 <script lang="ts">
-  import { browser } from '$app/environment';
   import { onMount } from 'svelte';
-  
+  import { applyTheme, currentTheme } from '$lib/theme';
+
   let isDark = false;
-  
+
   onMount(() => {
-    isDark = document.documentElement.classList.contains('dark');
+    isDark = currentTheme() === 'dark';
   });
-  
+
   function toggleTheme() {
-    if (browser) {
-      document.documentElement.classList.toggle('dark');
-      isDark = document.documentElement.classList.contains('dark');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    const next = currentTheme() === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    isDark = next === 'dark';
+    try {
+      localStorage.setItem('theme', next);
+    } catch {
+      // Private mode: the choice lasts for this visit only
     }
   }
 </script>
@@ -24,11 +27,11 @@
   title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
 >
   {#if isDark}
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 group-hover:text-amber-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-platform group-hover:text-warning-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
     </svg>
   {:else}
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
     </svg>
   {/if}

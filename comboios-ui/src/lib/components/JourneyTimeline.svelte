@@ -159,7 +159,7 @@
 
             {#if stop.platform}
               <div class="mt-0.5 hidden lg:flex justify-center">
-                <span class="px-1.5 py-0.5 rounded bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-[10px] font-mono font-bold">
+                <span class="platform-badge-sm">
                   {stop.platform}
                 </span>
               </div>
@@ -192,7 +192,7 @@
     <div class="flex items-center justify-between text-xs">
       <span class="text-gray-500 dark:text-gray-400">Scroll to view all stops</span>
       {#if currentIndex === stops.length - 1}
-        <span class="font-medium text-success-600 dark:text-success-400">Journey Completed</span>
+        <span class="font-medium text-success-700 dark:text-success-400">Journey Completed</span>
       {:else}
         <span class="font-medium text-gray-700 dark:text-gray-300">{currentIndex + 1} of {stops.length}</span>
       {/if}

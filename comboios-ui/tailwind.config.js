@@ -5,17 +5,34 @@ export default {
   theme: {
     extend: {
       colors: {
+        // "Night blue": navy-tinted neutrals. Dark mode uses the top of this
+        // scale (900 = page, 800 = cards, 700 = borders), so retinting here
+        // recolours every `gray-*` / `dark:*-gray-*` class in the app.
+        gray: {
+          50: '#f5f7fb',
+          100: '#eceff6',
+          200: '#dde2ec',
+          300: '#c3cad9',
+          400: '#8e98ad',
+          500: '#5f6982',
+          600: '#4b5468',
+          700: '#1e2942',
+          800: '#121a2e',
+          900: '#0a1020',
+          950: '#060a14',
+        },
+        // Brand: indigo (700 in light mode, 300/400 in dark mode)
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50: '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#6366f1',
+          600: '#4338ca',
+          700: '#3730a3',
+          800: '#312e81',
+          900: '#1e1b4b',
         },
         secondary: {
           50: '#f0f9ff',
@@ -29,18 +46,20 @@ export default {
           800: '#075985',
           900: '#0c4a6e',
         },
-        accent: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
+        // On time
+        success: {
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
         },
+        // Delayed
         warning: {
           50: '#fffbeb',
           100: '#fef3c7',
@@ -53,19 +72,7 @@ export default {
           800: '#92400e',
           900: '#78350f',
         },
-        danger: {
-          50: '#fef2f2',
-          100: '#fee2e2',
-          200: '#fecaca',
-          300: '#fca5a5',
-          400: '#f87171',
-          500: '#ef4444',
-          600: '#dc2626',
-          700: '#b91c1c',
-          800: '#991b1b',
-          900: '#7f1d1d',
-        },
-        // Alias for danger colors (used by delay indicators)
+        // Cancelled / errors
         error: {
           50: '#fef2f2',
           100: '#fee2e2',
@@ -78,10 +85,17 @@ export default {
           800: '#991b1b',
           900: '#7f1d1d',
         },
+        // Platform badge: amber with navy text in both themes
+        platform: {
+          DEFAULT: '#f59e0b',
+          ink: '#0a1020',
+        },
       },
+      // System fonts: no Google Fonts request (faster first load, works offline)
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        heading: ['Poppins', 'system-ui', 'sans-serif'],
+        sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        heading: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['ui-monospace', 'SF Mono', 'Menlo', 'Consolas', 'monospace'],
       },
       borderRadius: {
         'none': '0',

@@ -126,7 +126,7 @@
   </header>
 
   {#if offline}
-    <div class="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-900 dark:text-yellow-100 text-sm text-center px-4 py-2" role="status">
+    <div class="bg-warning-100 dark:bg-warning-900/50 text-warning-900 dark:text-warning-200 text-sm text-center px-4 py-2" role="status">
       You're offline. Times shown are from your last connection and may be out of date.
     </div>
   {/if}

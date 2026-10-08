@@ -21,9 +21,9 @@
     {#if region}
       <p class="text-sm text-gray-500 dark:text-gray-400">{region}</p>
     {/if}
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">ID: {id}</p>
+    <p class="text-xs text-gray-400 dark:text-gray-400 mt-1">ID: {id}</p>
   </div>
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
   </svg>
 </button>

@@ -131,7 +131,7 @@
   {#if error}
     <div class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
       <div class="card-body items-center justify-center py-12 text-center">
-        <div class="text-error mb-4">
+        <div class="text-error-600 dark:text-error-400 mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -195,7 +195,7 @@
               {#if train.duration}
                 {formatDuration(train.duration)}
                 {#if train.delay_minutes && train.delay_minutes > 0}
-                  <span class="text-warning-600 dark:text-warning-400">(+{train.delay_minutes} min)</span>
+                  <span class="text-warning-700 dark:text-warning-400">(+{train.delay_minutes} min)</span>
                 {/if}
               {:else}
                 -
@@ -234,7 +234,7 @@
                 <div class="text-lg font-bold text-gray-900 dark:text-white truncate">{nextStop.station_name}</div>
               {/if}
               <div class="font-mono text-gray-900 dark:text-white">
-                <span class="text-lg font-bold {(nextStop.delay_minutes ?? 0) > 0 ? 'text-warning-600 dark:text-warning-400' : ''}">{nextExpected}</span>
+                <span class="text-lg font-bold {(nextStop.delay_minutes ?? 0) > 0 ? 'text-warning-700 dark:text-warning-400' : ''}">{nextExpected}</span>
                 {#if nextExpected !== nextStop.scheduled_time}
                   <span class="text-sm text-gray-500 dark:text-gray-400 line-through ml-1">{nextStop.scheduled_time}</span>
                 {/if}
@@ -244,9 +244,9 @@
               </div>
             </div>
             {#if nextStop.platform}
-              <div class="shrink-0 text-center">
-                <div class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Plat.</div>
-                <div class="text-2xl font-bold font-mono text-primary-700 dark:text-primary-300">{nextStop.platform}</div>
+              <div class="shrink-0 flex flex-col items-center">
+                <div class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Plat.</div>
+                <span class="platform-badge">{nextStop.platform}</span>
               </div>
             {/if}
           </div>
@@ -313,13 +313,13 @@
                   <span class="text-gray-500 dark:text-gray-400">Time:</span>
                   <span class="font-mono font-medium text-gray-900 dark:text-gray-100">{stop.scheduled_time}</span>
                   {#if stop.predicted_time}
-                    <span class="text-warning-600 dark:text-warning-400">→ {stop.predicted_time}</span>
+                    <span class="text-warning-700 dark:text-warning-400">→ {stop.predicted_time}</span>
                   {/if}
                 </div>
                 {#if stop.platform}
                   <div class="flex items-center gap-1">
                     <span class="text-gray-500 dark:text-gray-400">Plat:</span>
-                    <span class="px-2 py-0.5 rounded bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-mono text-xs font-bold">{stop.platform}</span>
+                    <span class="platform-badge-sm">{stop.platform}</span>
                   </div>
                 {/if}
                 {#if delay && delay > 0}
@@ -327,7 +327,7 @@
                     <span class="text-error-600 dark:text-error-400 font-medium">+{delay} min</span>
                   </div>
                 {:else if stopStatus !== 'upcoming'}
-                  <span class="text-success-600 dark:text-success-400 text-xs">On time</span>
+                  <span class="text-success-700 dark:text-success-400 text-xs">On time</span>
                 {/if}
               </div>
             </div>
@@ -366,19 +366,17 @@
                   <td class="py-3 px-2 font-medium text-gray-900 dark:text-gray-100">{stop.station_name}</td>
                   <td class="py-3 px-2 text-center">
                     {#if stop.platform}
-                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-mono font-bold text-sm">
-                        {stop.platform}
-                      </span>
+                      <span class="platform-badge">{stop.platform}</span>
                     {:else}
-                      <span class="text-gray-500 dark:text-gray-500">-</span>
+                      <span class="text-gray-500 dark:text-gray-400">-</span>
                     {/if}
                   </td>
                   <td class="py-3 px-2 text-center font-mono text-gray-900 dark:text-gray-100">{stop.scheduled_time}</td>
                   <td class="py-3 px-2 text-center">
                     {#if stop.predicted_time}
-                      <span class="font-mono text-warning-600 dark:text-warning-400 font-semibold">{stop.predicted_time}</span>
+                      <span class="font-mono text-warning-700 dark:text-warning-400 font-semibold">{stop.predicted_time}</span>
                     {:else}
-                      <span class="text-gray-500 dark:text-gray-500">-</span>
+                      <span class="text-gray-500 dark:text-gray-400">-</span>
                     {/if}
                   </td>
                   <td class="py-3 px-2 text-center">
@@ -387,7 +385,7 @@
                     {:else if stopStatus !== 'upcoming'}
                       <span class="badge badge-success badge-sm">On time</span>
                     {:else}
-                      <span class="text-gray-500 dark:text-gray-500">-</span>
+                      <span class="text-gray-500 dark:text-gray-400">-</span>
                     {/if}
                   </td>
                   <td class="py-3 px-2 text-center">
