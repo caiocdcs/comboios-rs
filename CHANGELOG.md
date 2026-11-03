@@ -8,7 +8,7 @@
 - Live station board: departures/arrivals tabs, platform, expected vs timetabled time, countdown, auto-refresh.
 - Live train tracking: next stop with platform and countdown, expected arrival, stop-by-stop list, share.
 - Nix dev shell and `justfile`; `just check` runs the same checks as CI, which now also checks and builds the UI.
-- CI on Forgejo (pinned Nix image) alongside GitHub, which also runs `just audit` against the RustSec advisory database.
+- Forgejo CI (pinned Nix image) runs `just check` and `just audit` (RustSec advisories); GitHub CI is unchanged.
 
 ### Changed
 - New "Night blue" design for light and dark mode with the Overpass typeface; amber marks platforms, orange marks delays.
