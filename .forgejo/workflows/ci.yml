@@ -1,6 +1,6 @@
 # fmt, clippy, tests and the UI check/build via `just check` from the flake's
-# dev shell, in one job so everything shares the container's nix store.
-# nixos/nix has no node for actions/checkout, so the job clones with git.
+# dev shell, on the CI host's nix store (runner label `nix`), so builds are
+# reused between runs. The job clones with git.
 # Images are built on GitHub only; deploys build from Nix.
 name: CI
 
@@ -16,9 +16,7 @@ concurrency:
 
 jobs:
   check:
-    runs-on: alpine
-    container:
-      image: nixos/nix:2.35.4@sha256:f159a58f390677f41e8e900a74b6e2f9c7f27b364122ae6acf7a652ce6c551c0
+    runs-on: nix
     env:
       NIX_CONFIG: experimental-features = nix-command flakes
       CARGO_TERM_COLOR: always
