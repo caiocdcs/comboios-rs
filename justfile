@@ -44,6 +44,10 @@ check: ui-install
     cd {{ui}} && bun run check
     cd {{ui}} && bun run build
 
+# Check dependencies against the RustSec advisory database
+audit:
+    cargo audit
+
 # Run Rust tests
 test:
     cargo test --workspace

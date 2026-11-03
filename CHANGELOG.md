@@ -8,12 +8,14 @@
 - Live station board: departures/arrivals tabs, platform, expected vs timetabled time, countdown, auto-refresh.
 - Live train tracking: next stop with platform and countdown, expected arrival, stop-by-stop list, share.
 - Nix dev shell and `justfile`; `just check` runs the same checks as CI, which now also checks and builds the UI.
+- CI on Forgejo (pinned Nix image) alongside GitHub, which also runs `just audit` against the RustSec advisory database.
 
 ### Changed
 - New "Night blue" design for light and dark mode with the Overpass typeface; amber marks platforms, orange marks delays.
 - Station search works as you type and ignores accents ("sodré", "São Bento" now match).
 - Service badges show the short CP code (AP, IC, IR, R, U).
 - Simpler header, About and error pages.
+- MCP server moved to rmcp 3.8; tool names and parameters are unchanged.
 
 ### Fixed
 - Train journey dates and times use Lisbon time everywhere (server, MCP, UI) instead of the host timezone or UTC.
@@ -21,6 +23,7 @@
 - Dark mode could show buttons and badges in the wrong theme.
 - "Try again" on the station board hid errors; a journey's last stop showed "Arrived" before the train got there.
 - Missing favicon and UI type errors.
+- Dependency security advisories (rustls, rustls-webpki, h2, bytes, time, tracing-subscriber, rmcp).
 
 ## [0.3.0] - 2026-08-17
 

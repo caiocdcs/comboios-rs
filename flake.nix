@@ -28,6 +28,7 @@
               clippy
               rustfmt
               rust-analyzer
+              cargo-audit
 
               # UI (comboios-ui uses bun; the Docker image builds on Node 22)
               bun
