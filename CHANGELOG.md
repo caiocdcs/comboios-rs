@@ -18,6 +18,7 @@
 - MCP server moved to rmcp 3.8; tool names and parameters are unchanged.
 
 ### Fixed
+- Station boards failed with a 502 whenever CP listed a cancelled train (CP now sends `supression` as an object); cancelled trains show as cancelled again.
 - Train journey dates and times use Lisbon time everywhere (server, MCP, UI) instead of the host timezone or UTC.
 - The departures/arrivals filter had no control, and trains after midnight sorted first.
 - Dark mode could show buttons and badges in the wrong theme.
