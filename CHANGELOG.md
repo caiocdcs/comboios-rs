@@ -24,7 +24,7 @@
 - Dark mode could show buttons and badges in the wrong theme.
 - "Try again" on the station board hid errors; a journey's last stop showed "Arrived" before the train got there.
 - Missing favicon and UI type errors.
-- Dependency security advisories (rustls, rustls-webpki, h2, bytes, time, tracing-subscriber, rmcp).
+- Dependency security advisories (rustls, rustls-webpki, h2, bytes, time, tracing-subscriber, rmcp, url).
 
 ## [0.3.0] - 2026-08-17
 
